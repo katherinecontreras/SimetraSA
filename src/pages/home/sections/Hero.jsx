@@ -6,10 +6,12 @@ import Camion from '../../../assets/seccion1/Camion.png'
 import { useRef } from 'react'
 import { Reveal } from '../../../animations/Reveal.jsx'
 
-/** Grados máximos de inclinación (ratón y giroscopio) */
+/** Grados máximos de inclinación con ratón (escritorio) */
 const TILT_MAX_DEG = 14
+/** Grados máximos con giroscopio (más rango para que se note en el teléfono) */
+const TILT_MAX_ORIENT_DEG = 26
 /** Sensibilidad del giroscopio (beta/gamma relativos al primer frame) */
-const ORIENT_SENS = 0.22
+const ORIENT_SENS = 0.55
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
@@ -183,15 +185,15 @@ export default function Hero({ isLoaded, loaderExited = true, isMobile }) {
         const dGamma = e.gamma - baseGamma
         setRotX(
           gsap.utils.clamp(
-            -TILT_MAX_DEG,
-            TILT_MAX_DEG,
+            -TILT_MAX_ORIENT_DEG,
+            TILT_MAX_ORIENT_DEG,
             -dBeta * ORIENT_SENS,
           ),
         )
         setRotY(
           gsap.utils.clamp(
-            -TILT_MAX_DEG,
-            TILT_MAX_DEG,
+            -TILT_MAX_ORIENT_DEG,
+            TILT_MAX_ORIENT_DEG,
             dGamma * ORIENT_SENS,
           ),
         )
@@ -304,7 +306,7 @@ export default function Hero({ isLoaded, loaderExited = true, isMobile }) {
           className={`absolute top-0 left-0 z-30 flex w-full justify-center will-change-transform ${isMobile ? 'pointer-events-none' : ''}`}
         >
           <img
-            src={Camion}
+          src={Camion}
             alt="Camion"
             className={` object-contain ${isMobile ? 'hidden' : 'h-screen max-w-none' }`}
           />
