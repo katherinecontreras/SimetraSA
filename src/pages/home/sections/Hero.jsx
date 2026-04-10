@@ -8,10 +8,14 @@ import { Reveal } from '../../../animations/Reveal.jsx'
 
 /** Grados máximos de inclinación con ratón (escritorio) */
 const TILT_MAX_DEG = 14
-/** Grados máximos con giroscopio (más rango para que se note en el teléfono) */
-const TILT_MAX_ORIENT_DEG = 26
-/** Sensibilidad del giroscopio (beta/gamma relativos al primer frame) */
-const ORIENT_SENS = 0.55
+/** Grados máximos con giroscopio (arriba/abajo y lados) */
+const TILT_MAX_ORIENT_DEG = 42
+/** Beta (inclinar adelante/atrás) → rotationX */
+const ORIENT_SENS_BETA = 1.15
+/** Gamma (inclinar izquierda/derecha) → rotationY; suele necesitar un poco más */
+const ORIENT_SENS_GAMMA = 1.35
+/** quickTo en móvil: corto para que el mínimo giro se note al instante */
+const ORIENT_QUICK_TO_SEC = 0.16
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
@@ -153,18 +157,18 @@ export default function Hero({ isLoaded, loaderExited = true, isMobile }) {
         transformStyle: 'preserve-3d',
       })
 
-      const setRotX = gsap.quickTo(tilt, 'rotationX', {
-        duration: 0.55,
-        ease: 'power2.out',
-      })
-      const setRotY = gsap.quickTo(tilt, 'rotationY', {
-        duration: 0.55,
-        ease: 'power2.out',
-      })
-
       const prefersMouse = window.matchMedia(
         '(hover: hover) and (pointer: fine)',
       ).matches
+
+      const setRotX = gsap.quickTo(tilt, 'rotationX', {
+        duration: prefersMouse ? 0.55 : ORIENT_QUICK_TO_SEC,
+        ease: prefersMouse ? 'power2.out' : 'power3.out',
+      })
+      const setRotY = gsap.quickTo(tilt, 'rotationY', {
+        duration: prefersMouse ? 0.55 : ORIENT_QUICK_TO_SEC,
+        ease: prefersMouse ? 'power2.out' : 'power3.out',
+      })
 
       let baseBeta = null
       let baseGamma = null
@@ -187,14 +191,14 @@ export default function Hero({ isLoaded, loaderExited = true, isMobile }) {
           gsap.utils.clamp(
             -TILT_MAX_ORIENT_DEG,
             TILT_MAX_ORIENT_DEG,
-            -dBeta * ORIENT_SENS,
+            -dBeta * ORIENT_SENS_BETA,
           ),
         )
         setRotY(
           gsap.utils.clamp(
             -TILT_MAX_ORIENT_DEG,
             TILT_MAX_ORIENT_DEG,
-            dGamma * ORIENT_SENS,
+            dGamma * ORIENT_SENS_GAMMA,
           ),
         )
       }
