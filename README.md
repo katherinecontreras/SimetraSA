@@ -1,16 +1,76 @@
-# React + Vite
+# SimetraSA Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicacion web construida con React y Vite.
 
-Currently, two official plugins are available:
+## Tecnologias actuales
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `react` + `react-dom`: base de la interfaz.
+- `vite`: bundler y servidor de desarrollo.
+- `react-router-dom`: enrutamiento de paginas.
+- `tailwindcss` + `@tailwindcss/vite`: estilos utilitarios.
+- `framer-motion`: animaciones.
+- `eslint`: reglas de calidad de codigo.
 
-## React Compiler
+## Scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `npm run dev`: levanta entorno de desarrollo.
+- `npm run build`: genera build de produccion.
+- `npm run preview`: previsualiza la build.
+- `npm run lint`: ejecuta lint.
 
-## Expanding the ESLint configuration
+## Estructura de trabajo actual
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```txt
+src/
+  assets/
+  animations/
+  components/
+  layouts/
+  pages/
+    home/
+      page.jsx
+      sections/
+    proyects/
+      page.jsx
+      sections/
+    postulacion/
+      page.jsx
+      sections/
+    contacto/
+      page.jsx
+  utils/
+  App.jsx
+  index.css
+  main.jsx
+```
+
+## Flujo actual de la app
+
+- `src/main.jsx` monta la aplicacion con `BrowserRouter`.
+- `src/App.jsx` define rutas para:
+  - `/`
+  - `/proyects`
+  - `/postulacion`
+  - `/contacto`
+- `src/layouts/MainLayout/MainLayout.jsx` envuelve la navegacion y el `Outlet`.
+- Cada pagina principal vive en `src/pages/*/page/*Page.jsx` y consume secciones en `src/pages/*/sections`.
+
+## Archivos agregados y su rol
+
+- `src/components/Button.jsx`: boton base reutilizable.
+- `src/components/Input.jsx`: input base reutilizable.
+- `src/layouts/LoadingScreen.jsx`: pantalla de carga con mascara y progreso.
+- `src/animations/SplitPanelSlide.jsx`: animacion de paneles para el loading.
+- `src/utils/useDeviceType.js`: deteccion de dispositivo por breakpoints.
+- `src/utils/usePageLoader.js`: seguimiento de carga de recursos por pagina.
+- `src/utils/useSectionHeights.js`: medicion de secciones para animaciones de scroll.
+- `src/assets/seccion1/FondoZanja.png` y `src/assets/seccion1/camion3d.png`: recursos graficos.
+
+## Nota de organizacion
+
+Actualmente conviven dos enfoques de pagina:
+
+- Enfoque activo enrutado: `src/pages/*/page/*Page.jsx` (usado por `src/App.jsx`).
+- Enfoque en transicion: `src/pages/*/page.jsx` (algunos vacios o de ejemplo).
+
+Recomendacion para la siguiente iteracion: unificar en un solo enfoque para evitar duplicidades y rutas/imports inconsistentes.
