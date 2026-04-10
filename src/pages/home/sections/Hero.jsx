@@ -1,7 +1,7 @@
 import Simetra from '../../../assets/seccion1/Simetra.png'
 import Zanja from '../../../assets/seccion1/Zanja.png'
 import Cielo from '../../../assets/seccion1/Cielo.png'
-import Camion3d from '../../../assets/seccion1/Camion3d.png'
+import Camion from '../../../assets/seccion1/Camion.png'
 
 import { useRef } from 'react'
 import { Reveal } from '../../../animations/Reveal.jsx'
@@ -304,8 +304,8 @@ export default function Hero({ isLoaded, loaderExited = true, isMobile }) {
           className={`absolute top-0 left-0 z-30 flex w-full justify-center will-change-transform ${isMobile ? 'pointer-events-none' : ''}`}
         >
           <img
-            src={Camion3d}
-            alt="Camion 3D"
+            src={Camion}
+            alt="Camion"
             className={` object-contain ${isMobile ? 'hidden' : 'h-screen max-w-none' }`}
           />
         </div>
