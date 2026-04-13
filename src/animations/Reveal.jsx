@@ -1,67 +1,84 @@
+/**
+ * animations/Reveal.jsx
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Revelado con barra que se desliza sobre el contenido.
+ *
+ * Props:
+ *   children  : ReactNode
+ *   width     : CSSProperties['width']  (default: 'fit-content')
+ *   color     : string                  (default: '#ffffff') — color del velo Y del texto
+ *   isLoaded  : boolean                 (default: false)     — dispara la animación
+ *   delay     : number                  (default: 0)         — ms de retardo extra
+ */
+
 import { useEffect } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 
-/**
- * Revelado con barra que se desliza. `color` define el color del velo y del texto.
- * Se anima cuando `isLoaded` pasa a true (no usa inView).
- */
+// ─── Variantes ────────────────────────────────────────────────────────────────
+
+const CONTENT_VARIANTS = {
+  hidden:  { opacity: 0, x: 75 },
+  visible: { opacity: 1, x: 0  },
+}
+
+const WIPE_VARIANTS = {
+  hidden:  { left: '0%'   },
+  visible: { left: '100%' },
+}
+
+// ─── Tiempos base (ms) ────────────────────────────────────────────────────────
+const WIPE_DELAY_MS    = 200
+const CONTENT_DELAY_MS = 500
+
+// ─── Componente ──────────────────────────────────────────────────────────────
+
 export function Reveal({
   children,
-  width = 'fit-content',
-  color = '#ffffff',
+  width   = 'fit-content',
+  color   = '#ffffff',
   isLoaded = false,
+  delay   = 0,
 }) {
-  const mainControls = useAnimation()
-  const slideControls = useAnimation()
+  const contentControls = useAnimation()
+  const wipeControls    = useAnimation()
 
   useEffect(() => {
     if (!isLoaded) return
 
-    const t1 = setTimeout(() => {
-      mainControls.start('visible')
-    }, 500)
-    const t2 = setTimeout(() => {
-      slideControls.start('visible')
-    }, 200)
+    const timers = [
+      setTimeout(() => wipeControls.start('visible'),    delay + WIPE_DELAY_MS),
+      setTimeout(() => contentControls.start('visible'), delay + CONTENT_DELAY_MS),
+    ]
 
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-    }
-  }, [isLoaded, mainControls, slideControls])
+    return () => timers.forEach(clearTimeout)
+  }, [isLoaded, delay, contentControls, wipeControls])
 
   return (
-    <div style={{ position: 'relative', width }}>
+    <div style={{ position: 'relative', width, overflow: 'hidden' }}>
+      {/* Contenido animado */}
       <motion.div
-        variants={{
-          hidden: { opacity: 0, x: 75 },
-          visible: { opacity: 1, x: 0 },
-        }}
+        variants={CONTENT_VARIANTS}
         initial="hidden"
-        animate={mainControls}
+        animate={contentControls}
         transition={{ duration: 0.5, delay: 0.25 }}
         style={{ color }}
       >
         {children}
       </motion.div>
 
+      {/* Barra deslizante (velo) */}
       <motion.div
-        variants={{
-          hidden: { left: 0 },
-          visible: { left: '100%' },
-        }}
+        variants={WIPE_VARIANTS}
         initial="hidden"
-        animate={slideControls}
+        animate={wipeControls}
         transition={{ duration: 0.5, ease: 'easeIn' }}
+        aria-hidden
         style={{
-          position: 'absolute',
-          top: 4,
-          bottom: 4,
-          left: 0,
-          right: 0,
-          background: color,
-          zIndex: 20,
-          pointerEvents: 'none',
+          position      : 'absolute',
+          inset         : '4px 0',
+          background    : color,
+          zIndex        : 20,
+          pointerEvents : 'none',
         }}
       />
     </div>

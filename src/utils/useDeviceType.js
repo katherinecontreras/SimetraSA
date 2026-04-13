@@ -1,66 +1,66 @@
 /**
- * useDeviceType.js
+ * utils/useDeviceType.js
  * ─────────────────────────────────────────────────────────────────────────────
- * Hook que detecta el tipo de dispositivo según el ancho de la ventana.
- *
- * Grupos de diseño:
- *   • "desktop"  → PC y Laptop  (≥ 1024px)  → diseño "grande"
- *   • "mobile"   → Teléfono     (< 640px)   → diseño "pequeño"
- *   • "tablet"   → Tablet       (640–1023px)→ diseño "pequeño" (mismo que mobile)
+ * Detecta el tipo de dispositivo según el ancho de la ventana.
+ * Usa matchMedia internamente para evitar recalcular en cada px de resize.
  *
  * Retorna:
- *   {
- *     deviceType : "desktop" | "tablet" | "mobile",
- *     isDesktop  : boolean,   // true para PC y Laptop
- *     isMobile   : boolean,   // true para teléfono y tablet
- *   }
+ *   deviceType : 'desktop' | 'tablet' | 'mobile'
+ *   isDesktop  : boolean   — true para ≥ 1024 px
+ *   isMobile   : boolean   — true para < 1024 px  (tablet + teléfono)
  *
  * Uso:
- *   const { isDesktop, isMobile, deviceType } = useDeviceType();
- *   {isDesktop ? <NavbarPC /> : <NavbarTLF />}
+ *   const { isDesktop, isMobile } = useDeviceType()
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react'
 
-// ─── Breakpoints (ajustar si cambia el diseño de Tailwind) ───────────────────
-const BREAKPOINTS = {
-  TABLET_MIN: 640,   // sm
-  DESKTOP_MIN: 1024, // lg
-};
-
-function getDeviceType(width) {
-  if (width >= BREAKPOINTS.DESKTOP_MIN) return "desktop";
-  if (width >= BREAKPOINTS.TABLET_MIN)  return "tablet";
-  return "mobile";
+// ─── Breakpoints (alineados con Tailwind) ─────────────────────────────────────
+const BP = {
+  TABLET  : 640,   // sm
+  DESKTOP : 1024,  // lg
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getDeviceType(width) {
+  if (width >= BP.DESKTOP) return 'desktop'
+  if (width >= BP.TABLET)  return 'tablet'
+  return 'mobile'
+}
+
+// Seguro para SSR: devuelve 'desktop' si no hay window
+function safeInitialType() {
+  if (typeof window === 'undefined') return 'desktop'
+  return getDeviceType(window.innerWidth)
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
 export function useDeviceType() {
-  const [deviceType, setDeviceType] = useState(() =>
-    getDeviceType(window.innerWidth)
-  );
+  const [deviceType, setDeviceType] = useState(safeInitialType)
 
   useEffect(() => {
-    let rafId = null;
+    // Dos media queries: una por cada breakpoint relevante.
+    // MediaQueryList.addEventListener dispara solo en el cruce del umbral,
+    // sin necesidad de RAF ni throttle manual.
+    const mqDesktop = window.matchMedia(`(min-width: ${BP.DESKTOP}px)`)
+    const mqTablet  = window.matchMedia(`(min-width: ${BP.TABLET}px)`)
 
-    const handleResize = () => {
-      // Throttle con requestAnimationFrame para no recalcular en cada pixel
-      if (rafId) return;
-      rafId = requestAnimationFrame(() => {
-        setDeviceType(getDeviceType(window.innerWidth));
-        rafId = null;
-      });
-    };
+    const update = () => setDeviceType(getDeviceType(window.innerWidth))
 
-    window.addEventListener("resize", handleResize);
+    mqDesktop.addEventListener('change', update)
+    mqTablet.addEventListener('change', update)
+
     return () => {
-      window.removeEventListener("resize", handleResize);
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, []);
+      mqDesktop.removeEventListener('change', update)
+      mqTablet.removeEventListener('change', update)
+    }
+  }, [])
 
   return {
     deviceType,
-    isDesktop: deviceType === "desktop",
-    isMobile:  deviceType === "tablet" || deviceType === "mobile",
-  };
+    isDesktop : deviceType === 'desktop',
+    isMobile  : deviceType !== 'desktop',
+  }
 }

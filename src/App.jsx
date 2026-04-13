@@ -1,16 +1,33 @@
-import { Route, Routes } from 'react-router-dom'
-import ContactoPage from './pages/contacto/page'
-import HomePage from './pages/home/page'
-import PostulacionPage from './pages/postulacion/page'
-import ProyectsPage from './pages/proyects/page'
+/**
+ * App.jsx
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Rutas de la aplicación con lazy loading por página.
+ * Cada página carga su propio chunk JS solo cuando se navega a ella.
+ */
+
+import { lazy, Suspense } from 'react'
+import { Route, Routes }   from 'react-router-dom'
+
+const HomePage       = lazy(() => import('./pages/home/page'))
+const ProyectsPage   = lazy(() => import('./pages/proyects/page'))
+const PostulacionPage = lazy(() => import('./pages/postulacion/page'))
+const ContactoPage   = lazy(() => import('./pages/contacto/page'))
+
+// Fallback mínimo mientras carga el chunk JS de la página
+// (el LoadingScreen propio de cada página se encarga del resto)
+function PageFallback() {
+  return <div aria-hidden style={{ visibility: 'hidden' }} />
+}
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/proyects" element={<ProyectsPage />} />
-      <Route path="/postulacion" element={<PostulacionPage />} />
-      <Route path="/contacto" element={<ContactoPage />} />
-    </Routes>
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route path="/"            element={<HomePage />} />
+        <Route path="/proyects"    element={<ProyectsPage />} />
+        <Route path="/postulacion" element={<PostulacionPage />} />
+        <Route path="/contacto"    element={<ContactoPage />} />
+      </Routes>
+    </Suspense>
   )
 }
