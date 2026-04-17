@@ -14,6 +14,8 @@
 import { useEffect } from 'react'
 import { motion, useAnimation } from 'framer-motion'
 
+const MotionDiv = motion.div
+
 // ─── Variantes ────────────────────────────────────────────────────────────────
 
 const CONTENT_VARIANTS = {
@@ -30,6 +32,8 @@ const WIPE_VARIANTS = {
 const WIPE_DELAY_MS    = 200
 const CONTENT_DELAY_MS = 500
 
+const INSTANT = { duration: 0 }
+
 // ─── Componente ──────────────────────────────────────────────────────────────
 
 export function Reveal({
@@ -43,7 +47,16 @@ export function Reveal({
   const wipeControls    = useAnimation()
 
   useEffect(() => {
-    if (!isLoaded) return
+    if (!isLoaded) {
+      // Salida: texto oculto y velo FUERA (visible = left 100%), no franja blanca tapando
+      void contentControls.start('hidden', { transition: { duration: 0.2 } })
+      void wipeControls.start('visible', { transition: { duration: 0.25, ease: 'easeInOut' } })
+      return
+    }
+
+    // Entrada: velo cubre de golpe y luego la animación habitual
+    void wipeControls.start('hidden', { transition: INSTANT })
+    void contentControls.start('hidden', { transition: INSTANT })
 
     const timers = [
       setTimeout(() => wipeControls.start('visible'),    delay + WIPE_DELAY_MS),
@@ -56,7 +69,7 @@ export function Reveal({
   return (
     <div style={{ position: 'relative', width, overflow: 'hidden' }}>
       {/* Contenido animado */}
-      <motion.div
+      <MotionDiv
         variants={CONTENT_VARIANTS}
         initial="hidden"
         animate={contentControls}
@@ -64,12 +77,12 @@ export function Reveal({
         style={{ color }}
       >
         {children}
-      </motion.div>
+      </MotionDiv>
 
-      {/* Barra deslizante (velo) */}
-      <motion.div
+      {/* Barra deslizante (velo) — initial visible = fuera de vista, sin flash blanco al desmontar */}
+      <MotionDiv
         variants={WIPE_VARIANTS}
-        initial="hidden"
+        initial="visible"
         animate={wipeControls}
         transition={{ duration: 0.5, ease: 'easeIn' }}
         aria-hidden
