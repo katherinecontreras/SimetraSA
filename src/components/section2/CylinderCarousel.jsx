@@ -1,10 +1,10 @@
 /**
  * Carrusel por pasos: layout p1..p5 = slots 0..4.
- * Cuando la misma foto pasa de p5 a p1 (o al revés), se usan DOS <img> con el mismo src:
- * una sale por un lateral y otra entra por el otro (efecto cinta), no un solo elemento cruzando el arco.
+ * Avance automático solo en fase “armada” (pasos 5..10, las 5 imágenes siempre visibles).
+ * Al entrar en viewport acelera ~1 s.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 
 import {
@@ -16,6 +16,17 @@ import {
   centerWeightForFractionalSlot,
   ringRadiusPx,
 } from './cylinderCarouselMath'
+
+/** Primer paso con las 5 cajas ocupadas (nunca se muestra el estado vacío 0..4). */
+const STEP_MIN_ARMED = 5
+const PHASE_LEN_ARMED = CAROUSEL_MAX_STEP - STEP_MIN_ARMED + 1
+
+/** Velocidad base: pasos por segundo dentro del rango armado. */
+const AUTO_STEP_PER_SEC = 0.35
+/** Multiplicador durante el impulso al entrar en pantalla. */
+const VIEWPORT_BOOST_MULT = 2.6
+/** Duración del impulso (ms). */
+const VIEWPORT_BOOST_MS = 1000
 
 const MotionDiv = motion.div
 
@@ -29,8 +40,9 @@ const MASK_EDGE =
   'linear-gradient(90deg, transparent 0%, #fff 20%, #fff 80%, transparent 100%)'
 
 const ARC_SPREAD_DEG = 120
-const CENTER_SCALE_BOOST = 0.4
-const CENTER_LIFT_PX = 60
+/** Espacio extra entre cartas en el arco (px); mayor = menos solape al animar. */
+const CARD_RING_GAP_PX = 22
+const CENTER_LIFT_PX = 28
 const CENTER_BOX_SHADOW =
   '0 16px 40px rgba(0, 0, 0, 0.32), 0 6px 16px rgba(0, 0, 0, 0.16)'
 const FALLBACK_W = 420
@@ -83,24 +95,80 @@ function centerCardFlagFromWeight(c) {
   return c > 0.48 ? 1 : 0
 }
 
+/** z-index coherente con la posición en el arco (0/4 atrás, 1/3 medio, 2 delante). Evita que bordes queden bajo 1–3 al animar. */
+function zLayerFromSlot(s, n) {
+  const mid = (n - 1) / 2
+  const sZ = Math.max(0, Math.min(n - 1, s))
+  const distFromCenter = Math.abs(sZ - mid)
+  return (
+    180 +
+    Math.round((2 - distFromCenter) * 92) +
+    Math.round((2 - distFromCenter) ** 2 * 24)
+  )
+}
+
 export function CylinderCarousel({
   images,
-  step = 0,
   visible = true,
 }) {
   const items = useMemo(() => images.filter(Boolean), [images])
   const n = items.length || 1
   const [widths, setWidths] = useState(() => Array.from({ length: n }, () => FALLBACK_W))
+  const [step, setStep] = useState(STEP_MIN_ARMED)
+  const accRef = useRef(STEP_MIN_ARMED)
+  const rootRef = useRef(null)
+  const boostUntilRef = useRef(0)
+  const rafRef = useRef(0)
+  const lastTsRef = useRef(null)
 
-  const { L0, L1, t, hasContent } = useMemo(() => {
-    const stepClamped = Math.max(0, Math.min(CAROUSEL_MAX_STEP, step))
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          boostUntilRef.current = performance.now() + VIEWPORT_BOOST_MS
+        }
+      },
+      { threshold: 0.25 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const tick = () => {
+      const now = performance.now()
+      const last = lastTsRef.current
+      lastTsRef.current = now
+      const dt = last == null ? 0 : Math.min(0.05, (now - last) / 1000)
+      const boosted = now < boostUntilRef.current
+      const speed = AUTO_STEP_PER_SEC * (boosted ? VIEWPORT_BOOST_MULT : 1)
+      accRef.current += speed * dt
+      const local = accRef.current - STEP_MIN_ARMED
+      const wrapped =
+        ((local % PHASE_LEN_ARMED) + PHASE_LEN_ARMED) % PHASE_LEN_ARMED
+      setStep(STEP_MIN_ARMED + wrapped)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      lastTsRef.current = null
+    }
+  }, [])
+
+  const { L0, L1, t } = useMemo(() => {
+    const stepClamped = Math.max(
+      STEP_MIN_ARMED,
+      Math.min(CAROUSEL_MAX_STEP, step),
+    )
     const s0 = Math.floor(stepClamped)
     const s1 = Math.min(CAROUSEL_MAX_STEP, Math.ceil(stepClamped))
     const tt = s1 === s0 ? 1 : (stepClamped - s0) / (s1 - s0)
     const a = getCarouselLayout(s0)
     const b = getCarouselLayout(s1)
-    const hc = a.some((x) => x != null) || b.some((x) => x != null)
-    return { L0: a, L1: b, t: tt, hasContent: hc }
+    return { L0: a, L1: b, t: tt }
   }, [step])
 
   const renderRows = useMemo(() => {
@@ -154,9 +222,10 @@ export function CylinderCarousel({
             ? fractionalSHandoffIn(b.slot0, b.slot1, t, n)
             : fractionalSNormal(b.slot0, b.slot1, t, n)
       if (sA === null || sB === null) return 0
-      const cA = centerWeightForFractionalSlot(sA, n)
-      const cB = centerWeightForFractionalSlot(sB, n)
-      return cA - cB
+      const zA = zLayerFromSlot(sA, n)
+      const zB = zLayerFromSlot(sB, n)
+      if (zA !== zB) return zA - zB
+      return sA - sB
     })
 
     return rows
@@ -164,16 +233,19 @@ export function CylinderCarousel({
 
   if (items.length === 0) return null
 
+  const maxCardW = Math.max(FALLBACK_W, ...widths)
+
   return (
     <MotionDiv
+      ref={rootRef}
       className="absolute top-1/3 left-0 w-screen max-w-none overflow-hidden"
       initial={false}
       animate={{
-        opacity: visible && hasContent ? 1 : 0,
-        pointerEvents: visible && hasContent ? 'auto' : 'none',
+        opacity: visible ? 1 : 0,
+        pointerEvents: visible ? 'auto' : 'none',
       }}
       transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-      aria-hidden={!visible || !hasContent}
+      aria-hidden={!visible}
     >
       <div
         className="scene grid w-full overflow-hidden"
@@ -211,20 +283,15 @@ export function CylinderCarousel({
               slot1 === null
 
             const src = items[imgIdx]
-            const wPx = widths[imgIdx] ?? FALLBACK_W
-            const R = ringRadiusPx(wPx, n, ARC_SPREAD_DEG)
-            const scale = 1 + CENTER_SCALE_BOOST * c
+            // Un solo radio para todas las cartas: mismo cilindro; si no, cada R distinto solapa bordes.
+            const R = ringRadiusPx(maxCardW, n, ARC_SPREAD_DEG, CARD_RING_GAP_PX)
+            const scale = 1
             const lift = CENTER_LIFT_PX * c
             const isCenterish = centerCardFlagFromWeight(c) === 1
-            /** c cae a 0 en slots vecinos al centro; refuerzo cuadrático + extra si es la carta central escalada. */
-            const zBase =
-              24 +
-              Math.round(c * 95) +
-              Math.round(c * c * 220) +
-              (isCenterish ? 115 : 0)
+            const zBase = zLayerFromSlot(s, n)
             const z =
               enteringOrLeaving || mode === 'handoff-out' || mode === 'handoff-in'
-                ? zBase + 140
+                ? zBase + 72
                 : zBase
 
             return (

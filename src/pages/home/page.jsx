@@ -8,7 +8,7 @@
  *    (`loaderExited`) las animaciones de scroll/tilt del Hero se activan.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { motion } from 'framer-motion'
@@ -32,7 +32,6 @@ import section2Img4 from '../../assets/section2/image4.png'
 import section2Img5 from '../../assets/section2/image5.png'
 
 import { CylinderCarousel } from '../../components/section2/CylinderCarousel'
-import { useAsiTrabajamosCarouselScroll } from '../../hooks/home/useAsiTrabajamosCarouselScroll'
 
 /** Solo assets de `src/assets/section2/`. */
 const ASI_TRABAJAMOS_IMAGES = [
@@ -42,9 +41,6 @@ const ASI_TRABAJAMOS_IMAGES = [
   section2Img4,
   section2Img5,
 ]
-
-/** Tras Reveal del título (~500ms + transición contenido + wipe). */
-const ASI_TRABAJAMOS_TITLE_REVEAL_MS = 1250
 
 const MotionBackdrop = motion.div
 
@@ -56,6 +52,7 @@ export default function HomePage() {
   const [asiTrabajamosBackdropVisible, setAsiTrabajamosBackdropVisible] =
     useState(false)
   const asiTrabajamosSectionRef = useRef(null)
+  const nuestraHistoriaSectionRef = useRef(null)
   const servicesBlockRef = useRef(null)
 
   const loaderExited = !showLoader
@@ -67,22 +64,11 @@ export default function HomePage() {
     enabled: loaderExited,
     threshold: 0.15,
   })
-  const [asiTrabajamosTitleDone, setAsiTrabajamosTitleDone] = useState(false)
-  useEffect(() => {
-    if (!asiTrabajamosInView) return
-    if (asiTrabajamosTitleDone) return
-    const t = setTimeout(
-      () => setAsiTrabajamosTitleDone(true),
-      ASI_TRABAJAMOS_TITLE_REVEAL_MS,
-    )
-    return () => clearTimeout(t)
-  }, [asiTrabajamosInView, asiTrabajamosTitleDone])
-
-  const { displayStep, carouselActive } = useAsiTrabajamosCarouselScroll({
-    enabled: loaderExited && asiTrabajamosInView,
-    titleRevealComplete: asiTrabajamosTitleDone && asiTrabajamosInView,
-    sectionRef: asiTrabajamosSectionRef,
+  const nuestraHistoriaInView = useRevealWhenVisible(nuestraHistoriaSectionRef, {
+    enabled: loaderExited,
+    threshold: 0.15,
   })
+
   const onAsiTrabajamosRevealChange = useCallback((visible) => {
     setAsiTrabajamosBackdropVisible(visible)
   }, [])
@@ -215,24 +201,43 @@ export default function HomePage() {
         <section
           ref={asiTrabajamosSectionRef}
           data-section="asi-trabajamos"
-          className="relative isolate flex min-h-screen flex-col overflow-hidden text-white"
+          className="relative isolate box-border flex min-h-screen flex-col overflow-hidden text-white"
         >
           <MotionBackdrop
-            className="pointer-events-none absolute inset-0 z-0 bg-black border-b-4 border-[#6CBFE0]"
+            className="pointer-events-none absolute inset-0 z-0 bg-black"
             aria-hidden
             initial={{ opacity: 0 }}
             animate={{ opacity: asiTrabajamosBackdropVisible ? 1 : 0 }}
-            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.1}}
           />
           <div
-            className="relative z-20 flex min-h-0 w-full flex-1 flex-col items-center px-4
-                       pb-10 pt-[clamp(4rem,14vh,8rem)]"
+            className="relative z-20 flex min-h-0 w-full flex-1 flex-col items-center px-4 pt-[clamp(4rem,14vh,8rem)]"
           >
-            <SectionTitle text="Así trabajamos" isLoaded={asiTrabajamosInView} />
+            <SectionTitle
+              key={asiTrabajamosInView ? 'asi-trabajamos-visible' : 'asi-trabajamos-hidden'}
+              text="Así trabajamos"
+              isLoaded={asiTrabajamosInView}
+            />
             <CylinderCarousel
               images={ASI_TRABAJAMOS_IMAGES}
-              step={displayStep}
-              visible={carouselActive}
+              visible={loaderExited && asiTrabajamosInView}
+            />
+          </div>
+        </section>
+
+        <section
+          ref={nuestraHistoriaSectionRef}
+          data-section="nuestra-historia"
+          className="relative isolate flex min-h-screen flex-col text-white bg-black"
+        >
+
+          <div
+            className="absolute inset-0 top-[-30%] z-10 flex w-full flex-1 flex-col items-center px-4
+                       pb-16 pt-[clamp(4rem,14vh,8rem)]"
+          >
+            <SectionTitle
+              text="Nuestra historia"
+              isLoaded={nuestraHistoriaInView}
             />
           </div>
         </section>
