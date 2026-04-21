@@ -60,13 +60,6 @@ function isHandoffAcrossEnds(slot0, slot1, n) {
   return (slot0 === n - 1 && slot1 === 0) || (slot0 === 0 && slot1 === n - 1)
 }
 
-function fractionalSlot(slot0, slot1, n) {
-  if (slot0 === null && slot1 === null) return null
-  const s0 = slot0 === null ? -0.5 : slot0
-  const s1 = slot1 === null ? n - 0.5 : slot1
-  return { s0, s1 }
-}
-
 /** Índice de slot fraccionario para transición normal (entrada/salida o desplazamiento corto). */
 function fractionalSNormal(slot0, slot1, t, n) {
   const fs = fractionalSlot(slot0, slot1, n)
@@ -74,21 +67,25 @@ function fractionalSNormal(slot0, slot1, t, n) {
   return fs.s0 + (fs.s1 - fs.s0) * t
 }
 
-/**
- * Dos trayectorias paralelas (mismo t): salida por un borde y entrada por el otro.
- * Adelante: sale por la derecha (hacia n-0.5), entra por la izquierda (desde -0.5).
- * Reverso: sale por la izquierda, entra por la derecha.
- */
+function fractionalSlot(slot0, slot1, n) {
+  if (slot0 === null && slot1 === null) return null;
+  const s0 = slot0 === null ? -1 : slot0; // Antes -0.5
+  const s1 = slot1 === null ? n + 0.5 : slot1; // Antes n-0.5
+  return { s0, s1 };
+}
+
 function fractionalSHandoffOut(slot0, slot1, t, n) {
-  const forward = slot0 === n - 1 && slot1 === 0
-  if (forward) return slot0 + (n - 0.5 - slot0) * t
-  return slot0 + (-0.5 - slot0) * t
+  const forward = slot0 === n - 1 && slot1 === 0;
+  // Sale disparada más lejos para que el "fade out" sea natural
+  if (forward) return slot0 + (n + 0 - slot0) * t; 
+  return slot0 + (-1 - slot0) * t;
 }
 
 function fractionalSHandoffIn(slot0, slot1, t, n) {
-  const forward = slot0 === n - 1 && slot1 === 0
-  if (forward) return -0.5 + (slot1 - -0.5) * t
-  return n - 0.5 + (slot1 - (n - 0.5)) * t
+  const forward = slot0 === n - 1 && slot1 === 0;
+  // Entra desde más atrás para que ya traiga "vuelo" al aparecer
+  if (forward) return -1 + (slot1 - -1) * t;
+  return n + 0.5 + (slot1 - (n + 0.5)) * t;
 }
 
 function centerCardFlagFromWeight(c) {

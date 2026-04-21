@@ -93,7 +93,7 @@ function useHeroScroll({
             camionRef.current,
             { y: 0 },
             {
-              y: '-125vh',
+              y: '-150vh',
               ease: 'none',
               duration: 0.48,
               overwrite: 'auto',

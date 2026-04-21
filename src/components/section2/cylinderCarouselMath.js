@@ -23,10 +23,10 @@ export function angleDegForFractionalSlot(s, n, spreadDeg) {
 
 /** Peso centro para slot fraccionario (misma curva que enteros, extendida). */
 export function centerWeightForFractionalSlot(s, n) {
-  const mid = (n - 1) / 2
-  return Math.max(0, 1 - Math.abs(s - mid))
+  const mid = (n - 1) / 2;
+  // Permitimos que el peso (escala/opacidad) caiga más suavemente
+  return Math.max(0, 1 - Math.abs(s - mid) / 1.5);
 }
-
 /** Peso centro (misma lógica) para slot 0..n-1. */
 export function centerWeightForSlot(slotIndex, n) {
   const mid = (n - 1) / 2

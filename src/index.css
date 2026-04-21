@@ -1,6 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Josefin+Slab:ital,wght@0,100..700;1,100..700&family=Sekuya&display=swap');
 @import "tailwindcss";
 
+html {
+  overflow-x: clip;
+}
+
+body {
+  overflow-x: clip;
+  min-width: 0;
+}
+
 :root {
   --font-display: 'Sekuya', sans-serif;
   --font-subtitle: 'Josefin Sans', sans-serif;
