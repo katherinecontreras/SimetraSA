@@ -60,7 +60,10 @@ export function useDeviceType() {
 
   return {
     deviceType,
-    isDesktop : deviceType === 'desktop',
-    isMobile  : deviceType !== 'desktop',
+    isDesktop: deviceType === 'desktop',
+    isTablet: deviceType === 'tablet',
+    /** Tlf: ancho < 640px. */
+    isPhone: deviceType === 'mobile',
+    isMobile: deviceType !== 'desktop',
   }
 }

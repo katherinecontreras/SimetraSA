@@ -51,7 +51,7 @@ const ASI_TRABAJAMOS_IMAGES = [
 const MotionBackdrop = motion.div
 
 export default function HomePage() {
-  const { isMobile } = useDeviceType()
+  const { isMobile, isDesktop, isPhone } = useDeviceType()
   const { isLoaded } = usePageLoader([], 8_000)
   const [showLoader, setShowLoader] = useState(true)
   /** Opacidad del fondo de la sección (sigue al scroll del hero; puede bajar al volver arriba). */
@@ -105,6 +105,7 @@ export default function HomePage() {
   } = useHero({
     isLoaded,
     loaderExited,
+    isNarrowViewport: isMobile,
     onHeroScrollProgress,
   })
 
@@ -115,6 +116,9 @@ export default function HomePage() {
 
   const nuestraHistoriaBlackBackdropOn =
     nuestraHistoriaInViewport && scrollBlackOverlaySolid
+
+  /** Trazo SVG + botones solo en PC con ventana ≥1024px (excluye tlf y tablet). */
+  const showNuestraHistoriaSvg = isDesktop
 
   /** Tras el loader y en cada cambio de viewport, recalcula pin/scroll para evitar cortes y solapes. */
   useScrollTriggerRefresh(loaderExited)
@@ -127,7 +131,7 @@ export default function HomePage() {
     pathRef: historiaLinePathRef,
     lineStartRef: historiaLineScrollStartRef,
     sectionRef: nuestraHistoriaSectionRef,
-    enabled: loaderExited,
+    enabled: loaderExited && showNuestraHistoriaSvg,
     start: 'top 88%',
     end: 'bottom bottom',
     scrub: 0.45,
@@ -166,7 +170,7 @@ export default function HomePage() {
         />
       )}
 
-      <main>
+      <main className="min-w-0 overflow-x-hidden">
         <section
           data-section="hero"
           className="relative h-dvh min-h-dvh overflow-hidden"
@@ -210,21 +214,37 @@ export default function HomePage() {
 
             <div className="relative z-40 flex min-h-0 w-full flex-1 flex-col justify-center items-end px-4 md:px-10">
               <div ref={servicesBlockRef} className="relative w-auto">
-                <SectionTitle text="Services S.A"isLoaded={servicesInView && heroScrollAtStart} className="text-right text-2xl tracking-tight text-white md:text-4xl"/>
+                <SectionTitle
+                  text="Services S.A"
+                  isLoaded={servicesInView && heroScrollAtStart}
+                  className="text-right text-2xl tracking-tight text-white md:text-4xl"
+                />
               </div>
             </div>
           </div>
         </section>
-        <section ref={asiTrabajamosSectionRef} data-section="asi-trabajamos" className="relative isolate box-border flex min-h-screen mb-[-10vh] flex-col overflow-hidden text-white bg-transparent">
-          <div className="relative z-20 flex min-h-0 w-full flex-1 flex-col items-center px-4 pt-[clamp(4rem,14vh,8rem)]">
-            <SectionTitle key={asiTrabajamosInView ? 'asi-trabajamos-visible' : 'asi-trabajamos-hidden'} text="Así trabajamos" isLoaded={asiTrabajamosInView}/>
-            <CylinderCarousel images={ASI_TRABAJAMOS_IMAGES} visible={loaderExited && asiTrabajamosInView}/>
+        <section
+          ref={asiTrabajamosSectionRef}
+          data-section="asi-trabajamos"
+          className="relative isolate box-border flex min-h-0 flex-col overflow-hidden text-white bg-transparent max-sm:mb-0 sm:mb-[-10vh] sm:min-h-screen"
+        >
+          <div className="relative z-20 flex w-full min-w-0 max-w-full flex-col items-center px-3 pt-[clamp(3.5rem,12vh,8rem)] sm:min-h-0 sm:flex-1 sm:px-4 sm:pt-[clamp(4rem,14vh,8rem)] min-[1024px]:min-h-0 min-[1024px]:pb-[min(28vh,12rem)] max-sm:pb-8">
+            <SectionTitle
+              key={asiTrabajamosInView ? 'asi-trabajamos-visible' : 'asi-trabajamos-hidden'}
+              text="Así trabajamos"
+              isLoaded={asiTrabajamosInView}
+            />
+            <CylinderCarousel
+              images={ASI_TRABAJAMOS_IMAGES}
+              visible={loaderExited && asiTrabajamosInView}
+              isPhone={isPhone}
+            />
           </div>
         </section>
         <section
           ref={nuestraHistoriaSectionRef}
           data-section="nuestra-historia"
-          className="relative isolate flex min-h-[2000px] flex-col overflow-hidden bg-transparent text-white"
+          className="relative isolate flex min-h-[50vh] flex-col overflow-hidden bg-transparent text-white min-[1024px]:min-h-[clamp(1000px,200vh,2400px)]"
         >
           <div
             className={[
@@ -233,42 +253,49 @@ export default function HomePage() {
             ].join(' ')}
             aria-hidden
           />
-          <div className="relative z-10 flex w-full flex-1 flex-col items-center px-4 pb-16 pt-[clamp(4rem,14vh,8rem)]">
-            <SectionTitle text="Nuestra historia" isLoaded={nuestraHistoriaInView} />
-            <div
-              ref={historiaLineScrollStartRef}
-              className="h-0 w-full max-w-full shrink-0"
-              aria-hidden
+          <div className="relative z-20 flex w-full min-w-0 flex-1 flex-col items-center px-3 pb-12 md:pt-[clamp(3.5rem,12vh,8rem)] sm:px-4 sm:pb-16 sm:pt-0">
+            <SectionTitle
+              text="Nuestra historia"
+              isLoaded={nuestraHistoriaInView}
+              className="text-center text-3xl font-bold tracking-tight text-balance md:text-5xl"
             />
+            {showNuestraHistoriaSvg && (
+              <div
+                ref={historiaLineScrollStartRef}
+                className="h-0 w-full max-w-full shrink-0"
+                aria-hidden
+              />
+            )}
           </div>
-          <div className="pointer-events-none absolute left-0 top-0 z-5 h-full w-full min-w-0 overflow-visible">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="1781"
-              height="2070"
-              viewBox="0 0 1781 2070"
-              fill="none"
-              className="h-auto w-full max-w-[min(100%,1781px)]"
-              preserveAspectRatio="xMinYMin meet"
-              aria-hidden
-            >
-              <path
-                ref={historiaLinePathRef}
-                d="M1.30273 1.50928C1.30273 1.50928 444.347 384.968 1182.65 264.762C1388.65 231.221 1801.15 419.188 1777.31 899.14C1750.93 1430.34 1568.78 1594.18 1182.64 1514.55C110.803 1293.51 166.303 2069.01 166.303 2069.01"
-                stroke="#6CBFE0"
-                strokeWidth="4"
+          {showNuestraHistoriaSvg && (
+            <div className="pointer-events-none absolute inset-0 z-5 min-h-0 w-full min-w-0 sm:pointer-events-none">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1781"
+                height="2070"
+                viewBox="0 0 1781 2070"
                 fill="none"
-                vectorEffect="non-scaling-stroke"
-              />
-              <NuestraHistoriaQuartileMarkers
-                pathRef={historiaLinePathRef}
-                parts={NUESTRA_HISTORIA_PARTS}
-                lineColor="#6CBFE0"
-                lineDrawProgress={historiaLineDrawProgress}
-              />
-            </svg>
-          </div>
-          
+                className="h-auto w-full min-w-0 min-[1024px]:max-w-[min(100%,1781px)]"
+                preserveAspectRatio="xMinYMin meet"
+                aria-hidden
+              >
+                <path
+                  ref={historiaLinePathRef}
+                  d="M1.30273 1.50928C1.30273 1.50928 444.347 384.968 1182.65 264.762C1388.65 231.221 1801.15 419.188 1777.31 899.14C1750.93 1430.34 1568.78 1594.18 1182.64 1514.55C110.803 1293.51 166.303 2069.01 166.303 2069.01"
+                  stroke="#6CBFE0"
+                  strokeWidth="4"
+                  fill="none"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <NuestraHistoriaQuartileMarkers
+                  pathRef={historiaLinePathRef}
+                  parts={NUESTRA_HISTORIA_PARTS}
+                  lineColor="#6CBFE0"
+                  lineDrawProgress={historiaLineDrawProgress}
+                />
+              </svg>
+            </div>
+          )}
         </section>
       </main>
     </>

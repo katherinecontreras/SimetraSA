@@ -11,9 +11,12 @@ const BLACK_AND_TEXT_DUR = 0.45
 const SERVICES_EXIT_COMPLETE_PROGRESS =
   (BLACK_AND_TEXT_START + BLACK_AND_TEXT_DUR) / 1
 
+const PIN_SCROLL_END = { wide: '+=280%', narrow: '+=200%' }
+
 function useHeroScroll({
   isLoaded,
   loaderExited,
+  isNarrowViewport = false,
   pinRef,
   simetraRef,
   zanjaRef,
@@ -36,7 +39,7 @@ function useHeroScroll({
           scrollTrigger: {
             trigger: pinRef.current,
             start: 'top top',
-            end: '+=280%',
+            end: isNarrowViewport ? PIN_SCROLL_END.narrow : PIN_SCROLL_END.wide,
             pin: true,
             scrub: 0.35,
             invalidateOnRefresh: true,
@@ -115,6 +118,7 @@ function useHeroScroll({
       dependencies: [
         isLoaded,
         loaderExited,
+        isNarrowViewport,
         onAsiTrabajamosRevealChange,
         onHeroScrollProgress,
       ],

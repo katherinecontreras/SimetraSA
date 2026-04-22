@@ -104,10 +104,7 @@ function zLayerFromSlot(s, n) {
   )
 }
 
-export function CylinderCarousel({
-  images,
-  visible = true,
-}) {
+function CylinderCarousel3D({ images, visible = true, isPhone = false }) {
   const items = useMemo(() => images.filter(Boolean), [images])
   const n = items.length || 1
   const [widths, setWidths] = useState(() => Array.from({ length: n }, () => FALLBACK_W))
@@ -235,7 +232,11 @@ export function CylinderCarousel({
   return (
     <MotionDiv
       ref={rootRef}
-      className="absolute top-1/3 left-0 w-screen max-w-none overflow-hidden"
+      className={
+        isPhone
+          ? 'relative z-20 mx-auto mt-4 w-full max-w-none overflow-hidden'
+          : 'absolute left-0 top-1/3 w-screen max-w-none overflow-hidden'
+      }
       initial={false}
       animate={{
         opacity: visible ? 1 : 0,
@@ -245,14 +246,22 @@ export function CylinderCarousel({
       aria-hidden={!visible}
     >
       <div
-        className="scene grid w-full overflow-hidden"
+        className={
+          isPhone
+            ? 'scene grid w-full overflow-hidden min-h-[min(50vh,440px)]'
+            : 'scene grid w-full overflow-hidden'
+        }
         style={{
           perspective: '150em',
           perspectiveOrigin: '50% 50%',
-          maskImage: MASK_EDGE,
-          maskMode: 'alpha',
-          WebkitMaskImage: MASK_EDGE,
-          WebkitMaskSize: '100% 100%',
+          ...(isPhone
+            ? {}
+            : {
+                maskImage: MASK_EDGE,
+                maskMode: 'alpha',
+                WebkitMaskImage: MASK_EDGE,
+                WebkitMaskSize: '100% 100%',
+              }),
         }}
       >
         <div
@@ -318,7 +327,8 @@ export function CylinderCarousel({
                   position: 'relative',
                   borderRadius: '1.5em',
                   backfaceVisibility: 'hidden',
-                  boxShadow: isCenterish ? CENTER_BOX_SHADOW : 'none',
+                  boxShadow:
+                    isCenterish && !isPhone ? CENTER_BOX_SHADOW : 'none',
                   zIndex: z,
                   transform: `rotateY(${theta}deg) translateZ(${-R}px) scale(${scale}) translateZ(${lift}px)`,
                 }}
@@ -329,4 +339,16 @@ export function CylinderCarousel({
       </div>
     </MotionDiv>
   )
+}
+
+export function CylinderCarousel({
+  images,
+  visible = true,
+  /**
+   * Tlf (<640px): mismo 3D a ancho completo (100vw centrado, sin clip ni máscara lateral);
+   * sin sombra en la carta del centro. Tablet/desktop: máscara suave `MASK_EDGE`.
+   */
+  isPhone = false,
+}) {
+  return <CylinderCarousel3D images={images} visible={visible} isPhone={isPhone} />
 }

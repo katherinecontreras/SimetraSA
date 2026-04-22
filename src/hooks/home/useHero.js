@@ -11,6 +11,7 @@ import { useHeroTilt } from './useHeroTilt'
 function useHero({
   isLoaded,
   loaderExited = true,
+  isNarrowViewport = false,
   onAsiTrabajamosRevealChange,
   onHeroScrollProgress,
 }) {
@@ -30,6 +31,7 @@ function useHero({
   useHeroScroll({
     isLoaded,
     loaderExited,
+    isNarrowViewport,
     pinRef,
     simetraRef,
     zanjaRef,
