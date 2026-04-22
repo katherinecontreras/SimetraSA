@@ -16,8 +16,8 @@ import gsap from 'gsap'
  * @param {boolean} [params.enabled=true]
  * @param {string} [params.start='top 88%'] — cuando `lineStart` entra en viewport.
  * @param {string} [params.end='bottom bottom'] — relativo a `sectionRef`.
- * @param {boolean|number} [params.scrub=0.45]
- * @param {(progress01: number) => void} [params.onLineDrawProgress] — fracción de trazo visible (1 − offset/L), alineada al dibujo real.
+ * @param {boolean|number} [params.scrub=true] — `true` = acoplado 1:1 al scroll; número = suavizado (puede sentirse “pegajoso”).
+ * @param {(progress01: number) => void} [params.onLineDrawProgress] — progreso 0..1 (ScrollTrigger, alineado al tween del trazo).
  */
 function getDrawnPathFraction(path, length) {
   if (!path || !length) return 0
@@ -29,7 +29,9 @@ function getDrawnPathFraction(path, length) {
     off = co === '0' ? 0 : Number.parseFloat(co) || 0
   }
   off = Math.min(length, Math.max(0, off))
-  return 1 - off / length
+  const t = 1 - off / length
+  /* Evita que subpíxeles dejen el trazo en 0.998 y nunca dispare el cuartil 1. */
+  return t >= 0.997 ? 1 : t
 }
 
 function useSvgPathDrawOnScroll({
@@ -39,7 +41,8 @@ function useSvgPathDrawOnScroll({
   enabled = true,
   start = 'top 88%',
   end = 'bottom bottom',
-  scrub = 0.45,
+  /** `true` = sin inercia (evita sensación de “pegajoso”); número = suavizado en s. */
+  scrub = true,
   onLineDrawProgress,
 }) {
   const onLineDrawProgressRef = useRef(onLineDrawProgress)
@@ -52,7 +55,10 @@ function useSvgPathDrawOnScroll({
       const path = pathRef.current
       const startEl = lineStartRef.current
       const sectionEl = sectionRef.current
-      if (!path || !startEl || !sectionEl) return
+      const isRelativeEnd =
+        typeof end === 'string' && /^\s*[+\-]=/.test(String(end).trim())
+      if (!path || !startEl) return
+      if (!isRelativeEnd && !sectionEl) return
 
       const length = path.getTotalLength()
       if (!length || !Number.isFinite(length)) return
@@ -63,25 +69,30 @@ function useSvgPathDrawOnScroll({
         fill: 'none',
       })
 
+      const scrollTrigger = {
+        trigger: startEl,
+        start,
+        end,
+        scrub,
+        fastScrollEnd: true,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          onLineDrawProgressRef.current?.(self.progress)
+        },
+      }
+      if (!isRelativeEnd) {
+        scrollTrigger.endTrigger = sectionEl
+      }
+
       const tween = gsap.to(path, {
         strokeDashoffset: 0,
         ease: 'none',
-        scrollTrigger: {
-          trigger: startEl,
-          start,
-          endTrigger: sectionEl,
-          end,
-          scrub,
-          invalidateOnRefresh: true,
-          onUpdate: () => {
-            onLineDrawProgressRef.current?.(
-              getDrawnPathFraction(path, length),
-            )
-          },
-        },
+        scrollTrigger,
       })
 
-      onLineDrawProgressRef.current?.(getDrawnPathFraction(path, length))
+      onLineDrawProgressRef.current?.(
+        tween.scrollTrigger?.progress ?? getDrawnPathFraction(path, length),
+      )
 
       return () => {
         onLineDrawProgressRef.current?.(0)

@@ -235,7 +235,8 @@ function CylinderCarousel3D({ images, visible = true, isPhone = false }) {
       className={
         isPhone
           ? 'relative z-20 mx-auto mt-4 w-full max-w-none overflow-hidden'
-          : 'absolute left-0 top-1/3 w-screen max-w-none overflow-hidden'
+          /* w-screen (100vw) desborda ~ancho de scrollbar; sub-barra o scroll x en body. */
+          : 'absolute left-0 right-0 top-1/3 w-full min-w-0 max-w-full overflow-hidden'
       }
       initial={false}
       animate={{

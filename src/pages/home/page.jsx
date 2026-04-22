@@ -9,13 +9,15 @@
  */
 
 import { useCallback, useRef, useState } from 'react'
-
-import { useScrollTriggerRefresh } from '../../hooks/useScrollTriggerRefresh'
-import { useSvgPathDrawOnScroll } from '../../hooks/home/useSvgPathDrawOnScroll'
-import { useVisuallySolidBlack } from '../../hooks/home/useVisuallySolidBlack'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { motion } from 'framer-motion'
+
+import { BounceNudge } from '../../animations/BounceIn'
+import { useProyectosRecientesScrollGate } from '../../hooks/home/useProyectosRecientesScrollGate'
+import { useScrollTriggerRefresh } from '../../hooks/useScrollTriggerRefresh'
+import { useSvgPathDrawOnScroll } from '../../hooks/home/useSvgPathDrawOnScroll'
+import { useVisuallySolidBlack } from '../../hooks/home/useVisuallySolidBlack'
 
 import { SectionTitle } from '../../components/SectionTitle'
 import { useHero } from '../../hooks/home/useHero'
@@ -23,6 +25,7 @@ import { useRevealWhenVisible } from '../../hooks/useRevealWhenVisible'
 import { LoadingScreen } from '../../layouts/LoadingScreen'
 import { useDeviceType } from '../../utils/useDeviceType'
 import { usePageLoader } from '../../utils/usePageLoader'
+
 
 import Cielo from '../../assets/seccion1/Cielo.png'
 import Simetra from '../../assets/seccion1/Simetra.png'
@@ -35,10 +38,13 @@ import section2Img3 from '../../assets/section2/image3.png'
 import section2Img4 from '../../assets/section2/image4.png'
 import section2Img5 from '../../assets/section2/image5.png'
 
+import logobgBlack from '../../assets/section4/logoBGBLACK.png'
+
 import { CylinderCarousel } from '../../components/section2/CylinderCarousel'
+import { NuestraHistoriaQuartileLabels } from '../../components/section3/NuestraHistoriaQuartileLabels'
 import { NuestraHistoriaQuartileMarkers } from '../../components/section3/NuestraHistoriaQuartileMarkers'
 import { NUESTRA_HISTORIA_PARTS } from '../../constants/nuestraHistoria'
-
+import { PROYECTOS_RECIENTES } from '../../constants/proyectosRecientes'
 /** Solo assets de `src/assets/section2/`. */
 const ASI_TRABAJAMOS_IMAGES = [
   section2Img1,
@@ -57,6 +63,8 @@ export default function HomePage() {
   /** Opacidad del fondo de la sección (sigue al scroll del hero; puede bajar al volver arriba). */
   const asiTrabajamosSectionRef = useRef(null)
   const nuestraHistoriaSectionRef = useRef(null)
+  /** Tope de scroll en el inicio de “proyectos recientes” (sección 4). */
+  const proyectosRecientesSectionRef = useRef(null)
   const servicesBlockRef = useRef(null)
   /**
    * Capa negra distinta a `blackOverlayRef` del hero: evita que la timeline del pin
@@ -120,6 +128,11 @@ export default function HomePage() {
   /** Trazo SVG + botones solo en PC con ventana ≥1024px (excluye tlf y tablet). */
   const showNuestraHistoriaSvg = isDesktop
 
+  const { nudgeCount: proyectosNudgeCount } = useProyectosRecientesScrollGate({
+    sectionRef: proyectosRecientesSectionRef,
+    enabled: loaderExited,
+  })
+
   /** Tras el loader y en cada cambio de viewport, recalcula pin/scroll para evitar cortes y solapes. */
   useScrollTriggerRefresh(loaderExited)
 
@@ -132,9 +145,10 @@ export default function HomePage() {
     lineStartRef: historiaLineScrollStartRef,
     sectionRef: nuestraHistoriaSectionRef,
     enabled: loaderExited && showNuestraHistoriaSvg,
-    start: 'top 88%',
+    start: 'top 90%',
     end: 'bottom bottom',
-    scrub: 0.45,
+    /* ~120 ms: sigue al scroll sin el retraso de 0,45; el final va acorde al cierre de la sección. */
+    scrub: 0.12,
     onLineDrawProgress: onHistorialLineDrawProgress,
   })
 
@@ -170,7 +184,7 @@ export default function HomePage() {
         />
       )}
 
-      <main className="min-w-0 overflow-x-hidden">
+      <main className="min-w-0">
         <section
           data-section="hero"
           className="relative h-dvh min-h-dvh overflow-hidden"
@@ -244,7 +258,7 @@ export default function HomePage() {
         <section
           ref={nuestraHistoriaSectionRef}
           data-section="nuestra-historia"
-          className="relative isolate flex min-h-[50vh] flex-col overflow-hidden bg-transparent text-white min-[1024px]:min-h-[clamp(1000px,200vh,2400px)]"
+          className="relative isolate flex min-h-[50vh] flex-col overflow-x-clip overflow-y-visible bg-transparent text-white min-[1024px]:min-h-[min(max(min(calc(100vw*2070/1781+1rem),2100px),115vh),2800px)]"
         >
           <div
             className={[
@@ -275,7 +289,7 @@ export default function HomePage() {
                 height="2070"
                 viewBox="0 0 1781 2070"
                 fill="none"
-                className="h-auto w-full min-w-0 min-[1024px]:max-w-[min(100%,1781px)]"
+                className="h-auto w-full min-w-0 min-[1024px]:mb-[min(7rem,10vh)] min-[1024px]:max-w-[min(100%,1781px)] overflow-visible"
                 preserveAspectRatio="xMinYMin meet"
                 aria-hidden
               >
@@ -287,6 +301,11 @@ export default function HomePage() {
                   fill="none"
                   vectorEffect="non-scaling-stroke"
                 />
+                <NuestraHistoriaQuartileLabels
+                  pathRef={historiaLinePathRef}
+                  parts={NUESTRA_HISTORIA_PARTS}
+                  lineDrawProgress={historiaLineDrawProgress}
+                />
                 <NuestraHistoriaQuartileMarkers
                   pathRef={historiaLinePathRef}
                   parts={NUESTRA_HISTORIA_PARTS}
@@ -296,6 +315,41 @@ export default function HomePage() {
               </svg>
             </div>
           )}
+        </section>
+        <section
+          ref={proyectosRecientesSectionRef}
+          data-section="proyectos-recientes"
+          className="bg-black pt-62"
+        >
+          <div className='w-full h-full border-y-4 solid border-[#6CBFE0]'>
+            <div className='flex items-center justify-around py-4.5 px-32'>
+              <h1 className='uppercase text-3xl font-bold md:text-5xl text-white'>Proyectos</h1>
+              <div className='relative w-full'>
+                <img src={logobgBlack} alt="logo" className='w-40 h-40 absolute left-1/2 top-3/4 -translate-x-1/2 -translate-y-3/4 ' />
+              </div>
+              <h1 className='uppercase text-3xl font-bold md:text-5xl text-white'>Recientes</h1>
+            </div>
+          </div>
+          <div className='w-full h-full bg-black border-b-2 solid border-[#6CBFE0]'>
+            <div className='flex items-center justify-around py-4.5 px-32'>
+              {PROYECTOS_RECIENTES.map((proyecto, i) => (
+                <div key={proyecto.id}>
+                  <BounceNudge
+                    nudgeId={proyecto.id}
+                    tick={proyectosNudgeCount}
+                    as={motion.h2}
+                    stagger={i * 0.06}
+                    className="cursor-pointer uppercase text-3xl font-bold text-white transition-colors duration-300 hover:text-[#6CBFE0] md:text-3xl"
+                    tabIndex={0}
+                    role="button"
+                  >
+                    {proyecto.title}
+                  </BounceNudge>
+                </div>
+              ))}
+            </div> 
+          </div>
+          <p className='text-center py-10 text-white text-2xl cursor-pointer font-bold'>Selecciona el Proyecto para seguir →</p>
         </section>
       </main>
     </>

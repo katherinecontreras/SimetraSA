@@ -6,9 +6,9 @@
 import { useId, useLayoutEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 
+import { BounceIn } from '../../animations/BounceIn'
 import { getPathPointsAtLengthFractions } from '../../utils/pathQuartiles'
-
-const MotionG = motion.g
+import { isNuestraHistoriaPartSolelyActive } from '../../utils/nuestraHistoriaQuartileActivePart'
 
 const LINE_STROKE = '#6CBFE0'
 const OUTER_R = 44
@@ -22,27 +22,12 @@ const IMAGE_FILL = 0.9
  */
 const CLIP_CIRCLE_OBB = 0.5
 
-const NEAR = 1e-4
-
-function isQuartilVisible(lineDrawProgress, quartile) {
-  return lineDrawProgress + NEAR >= quartile
-}
-
-/**
- * Fondo acento (color de línea) entre este cuartil y el siguiente, hasta alcanzar el próximo.
- */
-function isInSegmentToNextQuartil(p, quartile, nextQuartile) {
-  if (p + NEAR < quartile) return false
-  if (nextQuartile == null) return true
-  return p < nextQuartile - NEAR
-}
-
 /**
  * @param {object} props
  * @param {React.RefObject<SVGPathElement|null>} props.pathRef
  * @param {Array<{ id: string, image: string, quartile: number, title: string, text: string }>} props.parts
  * @param {string} [props.lineColor]
- * @param {number} [props.lineDrawProgress=0] — 0..1, mismo progreso que el trazo; el icono del cuartil Q solo se muestra cuando el trazo ha llegado a esa fracción.
+ * @param {number} [props.lineDrawProgress=0] — 0..1; un solo icono visible por tramo [Qn, Qn+1).
  */
 function NuestraHistoriaQuartileMarkers({
   pathRef,
@@ -93,43 +78,26 @@ function NuestraHistoriaQuartileMarkers({
         </clipPath>
       </defs>
       {markers.map((m) => {
-        const visible = isQuartilVisible(lineDrawProgress, m.quartile)
-        const pos = byQuartile.findIndex((x) => x.id === m.id)
-        const nextQ = byQuartile[pos + 1]?.quartile
-        const segmentActive = isInSegmentToNextQuartil(
+        const solelyActive = isNuestraHistoriaPartSolelyActive(
           lineDrawProgress,
-          m.quartile,
-          nextQ ?? null,
+          m,
+          byQuartile,
         )
-        const fillColor = visible && segmentActive ? lineColor : 'black'
+        const fillColor = solelyActive ? lineColor : 'black'
         return (
           <g
             key={m.id}
             transform={`translate(${m.x} ${m.y})`}
             style={{
-              pointerEvents: visible ? 'auto' : 'none',
+              pointerEvents: solelyActive ? 'auto' : 'none',
             }}
-            aria-hidden={!visible}
+            aria-hidden={!solelyActive}
           >
             <title>{m.title}</title>
-            <MotionG
-              initial={false}
+            <BounceIn
+              visible={solelyActive}
+              as={motion.g}
               style={{ transformOrigin: '0px 0px' }}
-              animate={
-                visible
-                  ? { scale: 1, opacity: 1 }
-                  : { scale: 0, opacity: 0 }
-              }
-              transition={
-                visible
-                  ? {
-                      type: 'spring',
-                      stiffness: 420,
-                      damping: 12,
-                      mass: 0.5,
-                    }
-                  : { duration: 0.12, ease: 'easeIn' }
-              }
             >
               <circle
                 r={OUTER_R}
@@ -149,7 +117,7 @@ function NuestraHistoriaQuartileMarkers({
                 preserveAspectRatio="xMidYMid slice"
                 style={{ imageRendering: 'auto' }}
               />
-            </MotionG>
+            </BounceIn>
           </g>
         )
       })}
