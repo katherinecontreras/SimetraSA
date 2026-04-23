@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
-/**
- * Máximo scroll alcanzable: el mínimo entre alinear el inicio de la sección arriba
- * y el fin real de documento. Si el documento no permite llegar a la alineación
- * (scroll máx < posición alineada), el gate anterior hacía que `nudge` nunca disparara.
- */
 function getDocumentMaxScrollY() {
   const d = document.documentElement
   const b = document.body
@@ -13,16 +8,20 @@ function getDocumentMaxScrollY() {
 }
 
 /**
- * Máximo scroll: el inicio de la sección 4 (proyectos) alineada arriba, sin pasar
- * el fin de página. Un brinco al alinear; si se queda a mitad (página corta) al
- * llegar al scroll máx; y si se insiste con la rueda en el tope.
+ * Detecta al cruzar el scroll al que el inicio de “proyectos” queda arriba del todo
+ * (o el tope de documento si la página no alcanza esa alineación) para el bounce.
+ *
+ * Importante: no se limita `window.scrollY` a esa posición; el gate anterior
+ * hacía `min(alignY, docMax)` como techo fijo e impedía bajar y ver el resto
+ * de la sección 4 o la página.
  *
  * @param {object} o
  * @param {import('react').RefObject<HTMLElement | null>} o.sectionRef
  * @param {boolean} [o.enabled] — p. ej. isDesktop
  */
 function useProyectosRecientesScrollGate({ sectionRef, enabled = true }) {
-  const maxScrollY = useRef(0)
+  /** scrollY aproximado al alinear el top de la sección con el viewport (capado a docMax) */
+  const alignScrollYRef = useRef(0)
   const prevScrollY = useRef(-1)
   const prevSectionTop = useRef(-1)
   const [nudgeCount, setNudgeCount] = useState(0)
@@ -30,12 +29,12 @@ function useProyectosRecientesScrollGate({ sectionRef, enabled = true }) {
   const recompute = useCallback(() => {
     const el = sectionRef.current
     if (!el) {
-      maxScrollY.current = 0
+      alignScrollYRef.current = 0
       return
     }
     const alignY = el.getBoundingClientRect().top + window.scrollY
     const docMax = getDocumentMaxScrollY()
-    maxScrollY.current = docMax > 0 ? Math.min(alignY, docMax) : alignY
+    alignScrollYRef.current = docMax > 0 ? Math.min(alignY, docMax) : alignY
   }, [sectionRef])
 
   useLayoutEffect(() => {
@@ -68,20 +67,15 @@ function useProyectosRecientesScrollGate({ sectionRef, enabled = true }) {
       if (!el) return
 
       let nudgeY = false
-      const max = maxScrollY.current
-      if (max > 0) {
-        let y = window.scrollY
-        if (y > max) {
-          window.scrollTo({ top: max, left: 0, behavior: 'auto' })
-          y = max
-        }
-
+      const align = alignScrollYRef.current
+      const y = window.scrollY
+      if (align > 0) {
         const prev = prevScrollY.current
         const T = 1
-        nudgeY = prev >= 0 && prev < max - T && y >= max - T
+        nudgeY = prev >= 0 && prev < align - T && y >= align - T
         prevScrollY.current = y
       } else {
-        prevScrollY.current = window.scrollY
+        prevScrollY.current = y
       }
 
       const t = el.getBoundingClientRect().top
@@ -101,12 +95,11 @@ function useProyectosRecientesScrollGate({ sectionRef, enabled = true }) {
     if (!enabled) return
     const onWheel = (e) => {
       if (e.deltaY <= 0) return
-      const max = maxScrollY.current
-      if (max <= 0) return
-      if (window.scrollY >= max - 1) {
-        e.preventDefault()
-        setNudgeCount((c) => c + 1)
-      }
+      const docMax = getDocumentMaxScrollY()
+      if (docMax <= 0) return
+      if (window.scrollY < docMax - 1) return
+      e.preventDefault()
+      setNudgeCount((c) => c + 1)
     }
     window.addEventListener('wheel', onWheel, { passive: false })
     return () => window.removeEventListener('wheel', onWheel)

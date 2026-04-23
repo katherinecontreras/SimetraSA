@@ -41,6 +41,7 @@ import section2Img5 from '../../assets/section2/image5.png'
 import logobgBlack from '../../assets/section4/logoBGBLACK.png'
 
 import { CylinderCarousel } from '../../components/section2/CylinderCarousel'
+import { NuestraHistoriaMobileStack } from '../../components/section3/NuestraHistoriaMobileStack'
 import { NuestraHistoriaQuartileLabels } from '../../components/section3/NuestraHistoriaQuartileLabels'
 import { NuestraHistoriaQuartileMarkers } from '../../components/section3/NuestraHistoriaQuartileMarkers'
 import { NUESTRA_HISTORIA_PARTS } from '../../constants/nuestraHistoria'
@@ -280,6 +281,12 @@ export default function HomePage() {
                 aria-hidden
               />
             )}
+            {!showNuestraHistoriaSvg && (
+              <NuestraHistoriaMobileStack
+                parts={NUESTRA_HISTORIA_PARTS}
+                enabled={loaderExited}
+              />
+            )}
           </div>
           {showNuestraHistoriaSvg && (
             <div className="pointer-events-none absolute inset-0 z-5 min-h-0 w-full min-w-0 sm:pointer-events-none">
@@ -319,19 +326,29 @@ export default function HomePage() {
         <section
           ref={proyectosRecientesSectionRef}
           data-section="proyectos-recientes"
-          className="bg-black pt-62"
+          className="bg-black md:pt-62 pt-16 "
         >
-          <div className='w-full h-full border-y-4 solid border-[#6CBFE0]'>
-            <div className='flex items-center justify-around py-4.5 px-32'>
-              <h1 className='uppercase text-3xl font-bold md:text-5xl text-white'>Proyectos</h1>
+          <div
+            id="titulo-proyectos-recientes"
+            className="w-full border-y-4 border-solid md:px-32 border-[#6CBFE0]"
+          >
+            <div className="flex flex-col py-4 items-center justify-center md:gap-6 sm:px-8 md:flex-row md:justify-around">
+              <h1 className="text-center text-xl font-bold text-white uppercase md:text-5xl">
+                Proyectos
+              </h1>
               <div className='relative w-full'>
-                <img src={logobgBlack} alt="logo" className='w-40 h-40 absolute left-1/2 top-3/4 -translate-x-1/2 -translate-y-3/4 ' />
+                <img src={logobgBlack} alt="logo" className='md:w-40 w-20 md:h-40 h-20 absolute left-1/2 md:top-3/4 -top-20  -translate-x-1/2 -translate-y-3/4 ' />
               </div>
-              <h1 className='uppercase text-3xl font-bold md:text-5xl text-white'>Recientes</h1>
+              <h1 className="text-center text-xl font-bold text-white uppercase md:text-5xl">
+                Recientes
+              </h1>
             </div>
           </div>
-          <div className='w-full h-full bg-black border-b-2 solid border-[#6CBFE0]'>
-            <div className='flex items-center justify-around py-4.5 px-32'>
+          <div
+            id="titulos-de-cada-pryoecto"
+            className="w-full border-b-2 border-solid border-[#6CBFE0]"
+          >
+            <div className="flex flex-col items-center gap-4 px-4 py-6 sm:px-8 md:flex-row md:justify-around md:gap-2 md:px-12 md:py-4.5 lg:px-20 xl:px-32">
               {PROYECTOS_RECIENTES.map((proyecto, i) => (
                 <div key={proyecto.id}>
                   <BounceNudge
@@ -339,7 +356,7 @@ export default function HomePage() {
                     tick={proyectosNudgeCount}
                     as={motion.h2}
                     stagger={i * 0.06}
-                    className="cursor-pointer uppercase text-3xl font-bold text-white transition-colors duration-300 hover:text-[#6CBFE0] md:text-3xl"
+                    className="cursor-pointer text-center text-xl font-bold text-white uppercase transition-colors duration-300 hover:text-[#6CBFE0] sm:text-2xl md:text-3xl"
                     tabIndex={0}
                     role="button"
                   >
@@ -347,9 +364,11 @@ export default function HomePage() {
                   </BounceNudge>
                 </div>
               ))}
-            </div> 
+            </div>
           </div>
-          <p className='text-center py-10 text-white text-2xl cursor-pointer font-bold'>Selecciona el Proyecto para seguir →</p>
+          <p className="cursor-pointer px-4 py-10 text-center text-lg font-bold text-white sm:text-2xl">
+            Selecciona el Proyecto para seguir →
+          </p>
         </section>
       </main>
     </>
