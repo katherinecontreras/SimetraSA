@@ -7,6 +7,20 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 const BLACK_AND_TEXT_START = 0
 const BLACK_AND_TEXT_DUR = 0.45
 
+/**
+ * Misma curva de opacidad que el `blackOverlayRef` (0 → 1 → 0) en el timeline del pin.
+ * Sirve al nav para mezclar el texto a blanco en sincronía con el oscurecimento del hero.
+ * @param {number} p — progreso 0..1 de `onHeroScrollProgress` / `ScrollTrigger.progress`
+ * @returns {number} 0..1
+ */
+function heroNavBlendFromScrollProgress(p) {
+  const d = BLACK_AND_TEXT_DUR
+  if (p <= 0) return 0
+  if (p <= d) return p / d
+  if (p < 1) return 1 - (p - d) / (1 - d)
+  return 0
+}
+
 /** Progreso del ScrollTrigger (0–1) al completar la transición del overlay / handoff a la siguiente sección */
 const SERVICES_EXIT_COMPLETE_PROGRESS =
   (BLACK_AND_TEXT_START + BLACK_AND_TEXT_DUR) / 1
@@ -125,4 +139,4 @@ function useHeroScroll({
     },
   )
 }
-export { useHeroScroll }
+export { useHeroScroll, heroNavBlendFromScrollProgress }

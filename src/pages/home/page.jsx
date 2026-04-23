@@ -8,7 +8,7 @@
  *    (`loaderExited`) las animaciones de scroll/tilt del Hero se activan.
  */
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { motion } from 'framer-motion'
@@ -22,6 +22,9 @@ import { useVisuallySolidBlack } from '../../hooks/home/useVisuallySolidBlack'
 import { SectionTitle } from '../../components/SectionTitle'
 import { useHero } from '../../hooks/home/useHero'
 import { useRevealWhenVisible } from '../../hooks/useRevealWhenVisible'
+import { useHomeNavTheme } from '../../context/HomeNavThemeContext'
+import { useHomeNavSectionAt } from '../../hooks/home/useHomeNavSectionAt'
+import { heroNavBlendFromScrollProgress } from '../../hooks/home/useHeroScroll'
 import { LoadingScreen } from '../../layouts/LoadingScreen'
 import { useDeviceType } from '../../utils/useDeviceType'
 import { usePageLoader } from '../../utils/usePageLoader'
@@ -61,6 +64,16 @@ export default function HomePage() {
   const { isMobile, isDesktop, isPhone } = useDeviceType()
   const { isLoaded } = usePageLoader([], 8_000)
   const [showLoader, setShowLoader] = useState(true)
+  const { setNavLightBlend } = useHomeNavTheme()
+  /** Ref al wrapper del hero: scroll spy de la barra (tema claro/oscuro). */
+  const heroSectionRef = useRef(null)
+  /**
+   * En “proyectos recientes”: si se pulsa un título, el nav vuelve a tema oscuro
+   * hasta que se salga de la sección 4.
+   */
+  const [proyectoRecientePresionadoId, setProyectoRecientePresionadoId] = useState(null)
+  /** 0..1, transición al nav claro mientras bajas el hero (misma lógica que el overlay negro). */
+  const [heroNavBlend, setHeroNavBlend] = useState(0)
   /** Opacidad del fondo de la sección (sigue al scroll del hero; puede bajar al volver arriba). */
   const asiTrabajamosSectionRef = useRef(null)
   const nuestraHistoriaSectionRef = useRef(null)
@@ -79,6 +92,46 @@ export default function HomePage() {
   const [historiaLineDrawProgress, setHistoriaLineDrawProgress] = useState(0)
 
   const loaderExited = !showLoader
+
+  const activeHomeSection = useHomeNavSectionAt({
+    heroRef: heroSectionRef,
+    s2Ref: asiTrabajamosSectionRef,
+    s3Ref: nuestraHistoriaSectionRef,
+    s4Ref: proyectosRecientesSectionRef,
+    enabled: loaderExited,
+  })
+
+  const barNavLightBlend = useMemo(() => {
+    if (activeHomeSection === 'asi-trabajamos' || activeHomeSection === 'nuestra-historia') {
+      return 1
+    }
+    if (activeHomeSection === 'proyectos-recientes') {
+      return proyectoRecientePresionadoId ? 0 : 1
+    }
+    if (activeHomeSection === 'hero') {
+      return heroNavBlend
+    }
+    return 0
+  }, [activeHomeSection, proyectoRecientePresionadoId, heroNavBlend])
+
+  useEffect(() => {
+    setNavLightBlend(barNavLightBlend)
+  }, [barNavLightBlend, setNavLightBlend])
+
+  useEffect(() => {
+    return () => setNavLightBlend(0)
+  }, [setNavLightBlend])
+
+  useEffect(() => {
+    if (activeHomeSection === 'proyectos-recientes' || !proyectoRecientePresionadoId) {
+      return
+    }
+    const id = requestAnimationFrame(() => {
+      setProyectoRecientePresionadoId(null)
+    })
+    return () => cancelAnimationFrame(id)
+  }, [activeHomeSection, proyectoRecientePresionadoId])
+
   const servicesInView = useRevealWhenVisible(servicesBlockRef, {
     enabled: loaderExited,
     threshold: 0.25,
@@ -102,6 +155,7 @@ export default function HomePage() {
   const onHeroScrollProgress = useCallback((progress) => {
     const atStart = progress < 0.002
     setHeroScrollAtStart((prev) => (prev === atStart ? prev : atStart))
+    setHeroNavBlend(heroNavBlendFromScrollProgress(progress))
   }, [])
 
   const {
@@ -187,6 +241,7 @@ export default function HomePage() {
 
       <main className="min-w-0">
         <section
+          ref={heroSectionRef}
           data-section="hero"
           className="relative h-dvh min-h-dvh overflow-hidden"
         >
@@ -356,6 +411,13 @@ export default function HomePage() {
                     tick={proyectosNudgeCount}
                     as={motion.h2}
                     stagger={i * 0.06}
+                    onClick={() => setProyectoRecientePresionadoId(proyecto.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setProyectoRecientePresionadoId(proyecto.id)
+                      }
+                    }}
                     className="cursor-pointer text-center text-xl font-bold text-white uppercase transition-colors duration-300 hover:text-[#6CBFE0] sm:text-2xl md:text-3xl"
                     tabIndex={0}
                     role="button"
