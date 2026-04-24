@@ -13,20 +13,26 @@ export const PROYECTOS_RECIENTES = [
   {
     id: 'proyecto1',
     title: 'Montaje Lts',
+    imgFondo: fondoGrua,
+    imgSobreFondo: grua,
     parrafos: [
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ],
     ubicacion: '251 Loma de la Lata LTS1', 
+    imagenes:[img1grua, img2grua, img3grua, img4grua, img5grua, img6grua, img7grua, img8grua],
   },
   {
     id: 'proyecto2',
     title: 'USPOF',
+    imgFondo: fondoGrua,
+    imgSobreFondo: grua,
     parrafos: [
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     ],
     ubicacion: '254 USPO7 Loma de la Lata', 
+    imagenes:[img1grua, img2grua, img3grua, img4grua, img5grua, img6grua, img7grua, img8grua],
   },
   {
     id: 'proyecto3',

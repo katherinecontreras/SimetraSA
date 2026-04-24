@@ -509,15 +509,20 @@ export default function HomePage() {
           ref={proyectosRecientesSectionRef}
           data-section="proyectos-recientes"
           className={[
-            'bg-black transition-[padding] duration-500 ease-out',
+            'transition-[padding,background-color] bg-black duration-500 ease-out',
             ocultoPorDetalle
-              ? 'pt-0 md:pt-20 min-h-dvh'
+              ? 'relative isolate flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden pt-0 md:pt-20'
               : 'pt-16 md:pt-62',
           ].join(' ')}
         >
           <div
             id="titulo-proyectos-recientes"
-            className="w-full border-y-4 border-solid md:px-32 border-[#6CBFE0]"
+            className={[
+              'w-full border-y-4 border-solid border-[#6CBFE0] md:px-32',
+              ocultoPorDetalle ? 'relative z-20 shrink-0' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             <div className="flex flex-col py-4 items-center justify-center md:gap-6 sm:px-8 md:flex-row md:justify-around md:items-center">
               <h1 className={`text-center font-bold text-white uppercase ${ocultoPorDetalle ? 'text-xl' : 'text-xl md:text-5xl'}`}>
@@ -546,7 +551,12 @@ export default function HomePage() {
           </div>
           <div
             id="titulos-de-cada-pryoecto"
-            className="w-full border-b-2 border-solid border-[#6CBFE0]"
+            className={[
+              'w-full border-b-2 border-solid border-[#6CBFE0]',
+              ocultoPorDetalle ? 'relative z-20 shrink-0' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             <div
               className={[
@@ -623,13 +633,15 @@ export default function HomePage() {
             </p>
           )}
           {ocultoPorDetalle && proyectoSeleccionado && (
-            <DetailsProyect
-              proyecto={proyectoSeleccionado}
-              isPhone={isPhone}
-              direcciónSlide={direcciónDetalleMovil}
-              onCambiarProyecto={isPhone ? handleCambiarProyectoMovil : undefined}
-              onCerrar={handleCerrarDetalleProyecto}
-            />
+            <div className="relative z-0 h-full min-h-0 w-full min-w-0 flex-1 overflow-y-auto">
+              <DetailsProyect
+                proyecto={proyectoSeleccionado}
+                isPhone={isPhone}
+                direcciónSlide={direcciónDetalleMovil}
+                onCambiarProyecto={isPhone ? handleCambiarProyectoMovil : undefined}
+                onCerrar={handleCerrarDetalleProyecto}
+              />
+            </div>
           )}
         </section>
       </main>
