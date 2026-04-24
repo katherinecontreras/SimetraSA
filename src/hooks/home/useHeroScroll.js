@@ -39,6 +39,8 @@ function useHeroScroll({
   onAsiTrabajamosRevealChange,
   /** Progreso 0–1 del scrub del hero (para revertir Reveal de Services al hacer scroll). */
   onHeroScrollProgress,
+  /** Al variar se mata y recrea el ScrollTrigger (p. ej. el hero estuvo en display:none). */
+  heroScrollRebuildKey = 0,
 }) {
   useGSAP(
     () => {
@@ -135,6 +137,7 @@ function useHeroScroll({
         isNarrowViewport,
         onAsiTrabajamosRevealChange,
         onHeroScrollProgress,
+        heroScrollRebuildKey,
       ],
     },
   )

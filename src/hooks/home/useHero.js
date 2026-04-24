@@ -14,6 +14,8 @@ function useHero({
   isNarrowViewport = false,
   onAsiTrabajamosRevealChange,
   onHeroScrollProgress,
+  /** Sube al cerrar detalle de proyecto: recrea pin/ScrollTrigger del hero. */
+  heroScrollRebuildKey = 0,
 }) {
   const pinRef = useRef(null)
   const simetraRef = useRef(null)
@@ -39,6 +41,7 @@ function useHero({
     camionRef,
     onAsiTrabajamosRevealChange,
     onHeroScrollProgress,
+    heroScrollRebuildKey,
   })
   useHeroTilt({ isLoaded, loaderExited, pinRef, tiltRef: simetraTiltRef })
 
