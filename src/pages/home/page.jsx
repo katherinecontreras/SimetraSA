@@ -13,8 +13,11 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { motion } from 'framer-motion'
+import { ArrowUp } from 'lucide-react'
 
+import { AppearFrom } from '../../animations/AppearFrom'
 import { BounceNudge } from '../../animations/BounceIn'
+import { FadeInAndOut } from '../../animations/FadeInAndOut'
 import { useProyectosRecientesScrollGate } from '../../hooks/home/useProyectosRecientesScrollGate'
 import { useScrollTriggerRefresh } from '../../hooks/useScrollTriggerRefresh'
 import { useSvgPathDrawOnScroll } from '../../hooks/home/useSvgPathDrawOnScroll'
@@ -70,7 +73,7 @@ export default function HomePage() {
   const { isMobile, isDesktop, isPhone } = useDeviceType()
   const { isLoaded } = usePageLoader([], 8_000)
   const [showLoader, setShowLoader] = useState(true)
-  const { setNavLightBlend } = useHomeNavTheme()
+  const { setNavLightBlend, setNavBackdropBlend, setNavReloadHomeOnClick } = useHomeNavTheme()
   /** Ref al wrapper del hero: scroll spy de la barra (tema claro/oscuro). */
   const heroSectionRef = useRef(null)
   /**
@@ -78,6 +81,7 @@ export default function HomePage() {
    * hasta que se salga de la sección 4.
    */
   const [proyectoRecientePresionadoId, setProyectoRecientePresionadoId] = useState(null)
+  const [detalleMediaVisible, setDetalleMediaVisible] = useState(false)
   /**
    * Al volver de la vista detalle, sube y fuerza a useHeroScroll a recrear el ScrollTrigger
    * (el hero en display:none deja el pin en estado inválido → pantalla en blanco).
@@ -92,6 +96,11 @@ export default function HomePage() {
   const nuestraHistoriaSectionRef = useRef(null)
   /** Tope de scroll en el inicio de “proyectos recientes” (sección 4). */
   const proyectosRecientesSectionRef = useRef(null)
+  const detalleProyectoScrollRef = useRef(null)
+  const detalleTouchStartYRef = useRef(null)
+  const seguirBajandoNudgeLastRef = useRef(0)
+  const volverSubirNudgeLastRef = useRef(0)
+  const volverSubirHoverTimeoutRef = useRef(null)
   /** Atrás: detectar cierre de detalle (antes: detalle abierto, ahora: lista). */
   const prevOcultoDetalleRef = useRef(false)
   const servicesBlockRef = useRef(null)
@@ -105,6 +114,9 @@ export default function HomePage() {
   const historiaLineScrollStartRef = useRef(null)
   /** 0 = sin trazo, 1 = línea completa; sincronizado con el stroke del path (mismos hitos que los iconos). */
   const [historiaLineDrawProgress, setHistoriaLineDrawProgress] = useState(0)
+  const [seguirBajandoNudgeTick, setSeguirBajandoNudgeTick] = useState(0)
+  const [volverSubirNudgeTick, setVolverSubirNudgeTick] = useState(0)
+  const [volverSubirHoverActivo, setVolverSubirHoverActivo] = useState(false)
 
   const loaderExited = !showLoader
 
@@ -120,7 +132,7 @@ export default function HomePage() {
 
   const barNavLightBlend = useMemo(() => {
     if (proyectoRecientePresionadoId) {
-      return 0
+      return 1
     }
     if (activeHomeSection === 'asi-trabajamos' || activeHomeSection === 'nuestra-historia') {
       return 1
@@ -139,8 +151,23 @@ export default function HomePage() {
   }, [barNavLightBlend, setNavLightBlend])
 
   useEffect(() => {
-    return () => setNavLightBlend(0)
-  }, [setNavLightBlend])
+    setNavBackdropBlend(ocultoPorDetalle && !isPhone ? 1 : 0)
+  }, [isPhone, ocultoPorDetalle, setNavBackdropBlend])
+
+  useEffect(() => {
+    setNavReloadHomeOnClick(ocultoPorDetalle)
+  }, [ocultoPorDetalle, setNavReloadHomeOnClick])
+
+  useEffect(() => {
+    return () => {
+      setNavLightBlend(0)
+      setNavBackdropBlend(0)
+      setNavReloadHomeOnClick(false)
+      if (volverSubirHoverTimeoutRef.current) {
+        window.clearTimeout(volverSubirHoverTimeoutRef.current)
+      }
+    }
+  }, [setNavBackdropBlend, setNavLightBlend, setNavReloadHomeOnClick])
 
   const proyectoSeleccionado = useMemo(
     () => PROYECTOS_RECIENTES.find((p) => p.id === proyectoRecientePresionadoId) ?? null,
@@ -153,10 +180,20 @@ export default function HomePage() {
    */
   const [direcciónDetalleMovil, setDirecciónDetalleMovil] = useState(0)
 
+  const scrollDetalleProyecto = useCallback((direction) => {
+    const el = detalleProyectoScrollRef.current
+    if (!el) return
+    el.scrollBy({
+      top: direction * Math.max(el.clientHeight * 0.75, 240),
+      behavior: 'smooth',
+    })
+  }, [])
+
   const handleCerrarDetalleProyecto = useCallback(() => {
     if (cierreCortina !== CORTINA.off) return
     setCierreCortina(CORTINA.blocking)
     setProyectoRecientePresionadoId(null)
+    setDetalleMediaVisible(false)
     setDirecciónDetalleMovil(0)
     setHeroScrollRebuildKey((k) => k + 1)
     window.setTimeout(() => {
@@ -164,8 +201,54 @@ export default function HomePage() {
     }, 0)
   }, [cierreCortina])
 
+  const activarVolverDesdeScroll = useCallback(() => {
+    const now = performance.now()
+    if (now - volverSubirNudgeLastRef.current < 260) return
+    volverSubirNudgeLastRef.current = now
+    setVolverSubirNudgeTick((tick) => tick + 1)
+    if (!isPhone) {
+      setVolverSubirHoverActivo(true)
+      if (volverSubirHoverTimeoutRef.current) {
+        window.clearTimeout(volverSubirHoverTimeoutRef.current)
+      }
+      volverSubirHoverTimeoutRef.current = window.setTimeout(() => {
+        setVolverSubirHoverActivo(false)
+        volverSubirHoverTimeoutRef.current = null
+      }, 520)
+    }
+    window.setTimeout(handleCerrarDetalleProyecto, 120)
+  }, [handleCerrarDetalleProyecto, isPhone])
+
+  const handleDetalleProyectoWheel = useCallback((event) => {
+    const now = performance.now()
+    if (event.deltaY > 0) {
+      if (now - seguirBajandoNudgeLastRef.current < 260) return
+      seguirBajandoNudgeLastRef.current = now
+      setSeguirBajandoNudgeTick((tick) => tick + 1)
+      return
+    }
+    if (event.deltaY < 0) {
+      activarVolverDesdeScroll()
+    }
+  }, [activarVolverDesdeScroll])
+
+  const handleDetalleProyectoTouchStart = useCallback((event) => {
+    detalleTouchStartYRef.current = event.touches[0]?.clientY ?? null
+  }, [])
+
+  const handleDetalleProyectoTouchEnd = useCallback((event) => {
+    const startY = detalleTouchStartYRef.current
+    detalleTouchStartYRef.current = null
+    const endY = event.changedTouches[0]?.clientY
+    if (startY == null || endY == null) return
+    if (endY - startY > 48) {
+      activarVolverDesdeScroll()
+    }
+  }, [activarVolverDesdeScroll])
+
   const handleCambiarProyectoMovil = useCallback((delta) => {
     setDirecciónDetalleMovil(delta)
+    setDetalleMediaVisible(false)
     setProyectoRecientePresionadoId((currentId) => {
       const idx = PROYECTOS_RECIENTES.findIndex((p) => p.id === currentId)
       if (idx < 0) return currentId
@@ -511,7 +594,12 @@ export default function HomePage() {
           className={[
             'transition-[padding,background-color] bg-black duration-500 ease-out',
             ocultoPorDetalle
-              ? 'relative isolate flex h-dvh max-h-dvh min-h-0 flex-col overflow-hidden pt-0 md:pt-20'
+              ? [
+                  'relative isolate flex min-h-0 flex-col pt-0 md:pt-20',
+                  isPhone && detalleMediaVisible
+                    ? 'h-auto max-h-none overflow-visible'
+                    : 'h-dvh max-h-dvh overflow-hidden',
+                ].join(' ')
               : 'pt-16 md:pt-62',
           ].join(' ')}
         >
@@ -524,11 +612,26 @@ export default function HomePage() {
               .filter(Boolean)
               .join(' ')}
           >
-            <div className="flex flex-col py-4 items-center justify-center md:gap-6 sm:px-8 md:flex-row md:justify-around md:items-center">
+            {ocultoPorDetalle && !isPhone ? (
+              <img
+                src={logobgWhite}
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute top-2 left-1/2 z-11000 h-20 w-20 -translate-x-1/2 drop-shadow-[0_0_18px_rgba(255,255,255,0.35)]"
+              />
+            ) : null}
+            <div
+              className={[
+                'flex flex-col py-4 items-center md:flex-row md:items-center',
+                ocultoPorDetalle
+                  ? 'justify-start gap-2 px-4 md:justify-start md:gap-2'
+                  : 'justify-center sm:px-8 md:justify-around md:gap-6',
+              ].join(' ')}
+            >
               <h1 className={`text-center font-bold text-white uppercase ${ocultoPorDetalle ? 'text-xl' : 'text-xl md:text-5xl'}`}>
                 Proyectos
               </h1>
-              <div className='relative w-full'>
+              <div className={ocultoPorDetalle ? 'hidden' : 'relative w-full'}>
                 <img src={logobgBlack} alt="logo" 
                 className={`md:w-40 w-20 md:h-40 h-20 absolute left-1/2 ${ocultoPorDetalle
                   ? 'md:top-4/4 -top-[400px]  -translate-x-1/2 -translate-y-[400px] '
@@ -539,8 +642,8 @@ export default function HomePage() {
                   alt=""
                   aria-hidden
                   className={[
-                    'w-20 h-20 transition-all ease-out duration-300 absolute left-1/2 -translate-x-1/2 ml-0 -top-18 ',
-                    ocultoPorDetalle && !isPhone ? 'block' : 'hidden',
+                    'w-20 h-20 transition-all ease-out duration-300 left-1/2 -translate-x-1/2 ml-0 drop-shadow-[0_0_18px_rgba(255,255,255,0.35)]',
+                    'hidden',
                   ].join(' ')}
                 />
               </div>
@@ -548,6 +651,22 @@ export default function HomePage() {
                 Recientes
               </h1>
             </div>
+            {ocultoPorDetalle && !detalleMediaVisible && (
+              <BounceNudge
+                nudgeId="volver-a-subir"
+                tick={volverSubirNudgeTick}
+                as={motion.button}
+                type="button"
+                onClick={handleCerrarDetalleProyecto}
+                className={[
+                  'absolute top-1/2 right-8 hidden -translate-y-1/2 items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold uppercase tracking-wide text-black shadow-lg transition md:flex',
+                  volverSubirHoverActivo ? 'bg-[#6CBFE0]' : 'bg-white hover:bg-[#6CBFE0]',
+                ].join(' ')}
+              >
+                Volver a subir
+                <ArrowUp className="h-4 w-4" aria-hidden />
+              </BounceNudge>
+            )}
           </div>
           <div
             id="titulos-de-cada-pryoecto"
@@ -593,12 +712,14 @@ export default function HomePage() {
                       stagger={i * 0.06}
                       onClick={() => {
                         setDirecciónDetalleMovil(0)
+                        setDetalleMediaVisible(false)
                         setProyectoRecientePresionadoId(proyecto.id)
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault()
                           setDirecciónDetalleMovil(0)
+                          setDetalleMediaVisible(false)
                           setProyectoRecientePresionadoId(proyecto.id)
                         }
                       }}
@@ -627,22 +748,70 @@ export default function HomePage() {
               })}
             </div>
           </div>
+          {ocultoPorDetalle && (
+            <div className="relative z-30 h-0">
+              <AppearFrom
+                from="left"
+                id="volver-media-proyecto"
+                visible={detalleMediaVisible}
+                className="pointer-events-none absolute top-0 left-0 w-full overflow-visible"
+                motionClassName="pointer-events-auto"
+              >
+                <FadeInAndOut visible={detalleMediaVisible} variant="opacity" duration={0.25} delay={0}>
+                  <button
+                    type="button"
+                    onClick={() => setDetalleMediaVisible(false)}
+                    className="bg-black/85 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-[#6CBFE0] shadow-lg transition hover:bg-black hover:text-white"
+                  >
+                    Volver
+                  </button>
+                </FadeInAndOut>
+              </AppearFrom>
+            </div>
+          )}
           {!ocultoPorDetalle && (
             <p className="cursor-pointer px-4 py-10 text-center text-lg font-bold text-white sm:text-2xl">
-              Selecciona el Proyecto para seguir →
+              Selecciona el Proyecto para ver el detalle →
             </p>
           )}
           {ocultoPorDetalle && proyectoSeleccionado && (
-            <div className="relative z-0 h-full min-h-0 w-full min-w-0 flex-1 overflow-y-auto">
+            <div
+              ref={detalleProyectoScrollRef}
+              onWheel={handleDetalleProyectoWheel}
+              onTouchStart={handleDetalleProyectoTouchStart}
+              onTouchEnd={handleDetalleProyectoTouchEnd}
+              className={[
+                'relative z-0 min-h-0 w-full min-w-0',
+                isPhone && detalleMediaVisible
+                  ? 'h-auto flex-none overflow-visible'
+                  : 'h-full flex-1 overflow-y-auto',
+              ].join(' ')}
+            >
               <DetailsProyect
                 proyecto={proyectoSeleccionado}
                 isPhone={isPhone}
+                onSeguirBajando={() => scrollDetalleProyecto(1)}
+                onVolverArriba={handleCerrarDetalleProyecto}
+                onVerMedia={() => setDetalleMediaVisible(true)}
+                mediaVisible={detalleMediaVisible}
+                seguirBajandoNudgeTick={seguirBajandoNudgeTick}
+                volverSubirNudgeTick={volverSubirNudgeTick}
                 direcciónSlide={direcciónDetalleMovil}
                 onCambiarProyecto={isPhone ? handleCambiarProyectoMovil : undefined}
                 onCerrar={handleCerrarDetalleProyecto}
               />
             </div>
           )}
+        </section>
+        <section
+          data-section="vacantes"
+          className="relative z-10000 min-h-dvh rounded-t-2xl bg-white text-black"
+        >
+          <div className="flex min-h-dvh w-full items-start justify-center px-4 pt-24 md:pt-32">
+            <h1 className="text-center text-3xl font-bold uppercase tracking-tight md:text-6xl">
+              Vacantes
+            </h1>
+          </div>
         </section>
       </main>
     </>

@@ -34,7 +34,7 @@ export function appearFrom(lado) {
       return {
         initial: { x: '-100%', y: 0 },
         animate: { x: 0, y: 0, transition: tIn },
-        exit: { x: '100%', y: 0, transition: tOut },
+        exit: { x: '-100%', y: 0, transition: tOut },
       }
   }
 }

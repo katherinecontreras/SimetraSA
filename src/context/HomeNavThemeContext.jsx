@@ -10,14 +10,34 @@ const HomeNavThemeContext = createContext(null)
 
 export function HomeNavThemeProvider({ children }) {
   const [navLightBlend, setNavLightBlendState] = useState(0)
+  const [navBackdropBlend, setNavBackdropBlendState] = useState(0)
+  const [navReloadHomeOnClick, setNavReloadHomeOnClick] = useState(false)
   const setNavLightBlend = useCallback((v) => {
     const n = typeof v === 'number' && Number.isFinite(v) ? v : 0
     setNavLightBlendState(Math.max(0, Math.min(1, n)))
   }, [])
+  const setNavBackdropBlend = useCallback((v) => {
+    const n = typeof v === 'number' && Number.isFinite(v) ? v : 0
+    setNavBackdropBlendState(Math.max(0, Math.min(1, n)))
+  }, [])
 
   const value = useMemo(
-    () => ({ navLightBlend, setNavLightBlend }),
-    [navLightBlend, setNavLightBlend],
+    () => ({
+      navLightBlend,
+      navBackdropBlend,
+      navReloadHomeOnClick,
+      setNavLightBlend,
+      setNavBackdropBlend,
+      setNavReloadHomeOnClick,
+    }),
+    [
+      navLightBlend,
+      navBackdropBlend,
+      navReloadHomeOnClick,
+      setNavLightBlend,
+      setNavBackdropBlend,
+      setNavReloadHomeOnClick,
+    ],
   )
   return (
     <HomeNavThemeContext.Provider value={value}>
@@ -29,7 +49,14 @@ export function HomeNavThemeProvider({ children }) {
 export function useHomeNavTheme() {
   const ctx = useContext(HomeNavThemeContext)
   if (!ctx) {
-    return { navLightBlend: 0, setNavLightBlend: () => {} }
+    return {
+      navLightBlend: 0,
+      navBackdropBlend: 0,
+      navReloadHomeOnClick: false,
+      setNavLightBlend: () => {},
+      setNavBackdropBlend: () => {},
+      setNavReloadHomeOnClick: () => {},
+    }
   }
   return ctx
 }

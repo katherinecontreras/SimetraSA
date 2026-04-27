@@ -3,7 +3,14 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'   
 import { TILT } from '../../constantes/constanteHero'
 
-function useHeroTilt({ isLoaded, loaderExited, pinRef, tiltRef }) {
+function useHeroTilt({
+  isLoaded,
+  loaderExited,
+  pinRef,
+  tiltRef,
+  listenOnWindow = false,
+  resetKey,
+}) {
     useGSAP(
       () => {
         if (!isLoaded || !loaderExited) return
@@ -34,12 +41,15 @@ function useHeroTilt({ isLoaded, loaderExited, pinRef, tiltRef }) {
             setRotY( nx * TILT.MOUSE_MAX_DEG)
           }
   
-          pin.addEventListener('pointermove',  onMove)
-          pin.addEventListener('pointerleave', resetTilt)
+          const moveTarget = listenOnWindow ? window : pin
+          const leaveTarget = listenOnWindow ? window : pin
+  
+          moveTarget.addEventListener('pointermove',  onMove)
+          leaveTarget.addEventListener(listenOnWindow ? 'blur' : 'pointerleave', resetTilt)
   
           return () => {
-            pin.removeEventListener('pointermove',  onMove)
-            pin.removeEventListener('pointerleave', resetTilt)
+            moveTarget.removeEventListener('pointermove',  onMove)
+            leaveTarget.removeEventListener(listenOnWindow ? 'blur' : 'pointerleave', resetTilt)
             gsap.set(tilt, { rotationX: 0, rotationY: 0 })
           }
         }
@@ -84,15 +94,16 @@ function useHeroTilt({ isLoaded, loaderExited, pinRef, tiltRef }) {
           attachOrientation()
         }
   
-        pin.addEventListener('touchstart', requestPermission, { passive: true, once: true })
+        const touchTarget = listenOnWindow ? window : pin
+        touchTarget.addEventListener('touchstart', requestPermission, { passive: true, once: true })
   
         return () => {
-          pin.removeEventListener('touchstart', requestPermission)
+          touchTarget.removeEventListener('touchstart', requestPermission)
           detach?.()
           gsap.set(tilt, { rotationX: 0, rotationY: 0 })
         }
       },
-      { dependencies: [isLoaded, loaderExited] },
+      { dependencies: [isLoaded, loaderExited, listenOnWindow, resetKey] },
     )
   }
 export { useHeroTilt }

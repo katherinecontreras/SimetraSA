@@ -8,7 +8,7 @@
  */
 
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 
 import { useHomeNavTheme } from '../context/HomeNavThemeContext'
@@ -76,7 +76,7 @@ function MenuIcon({ open, barColor }) {
 
 export function Navbar() {
   const { pathname } = useLocation()
-  const { navLightBlend: t } = useHomeNavTheme()
+  const { navLightBlend: t, navBackdropBlend, navReloadHomeOnClick } = useHomeNavTheme()
   const menuId = useId()
   const [mobileOpen, setMobileOpen] = useState(false)
   const postulateBlockRef = useRef(null)
@@ -93,6 +93,13 @@ export function Navbar() {
   }, [])
 
   const linkStyle = useMemo(() => ({ color: navForeground(t) }), [t])
+  const headerStyle = useMemo(
+    () => ({
+      paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
+      backgroundColor: `rgb(0 0 0 / ${(navBackdropBlend * 0.5).toFixed(3)})`,
+    }),
+    [navBackdropBlend],
+  )
   const postStyle = useMemo(
     () => ({
       backgroundColor: ACCENT_BLUE,
@@ -112,6 +119,24 @@ export function Navbar() {
     setMobileOpen(false)
     setMobileDimHeight(0)
   }, [])
+
+  const handleHomeClick = useCallback(
+    (event) => {
+      if (!navReloadHomeOnClick) {
+        closeMenu()
+        return
+      }
+
+      event.preventDefault()
+      closeMenu()
+      if (pathname === '/') {
+        window.location.reload()
+        return
+      }
+      window.location.assign('/')
+    },
+    [closeMenu, navReloadHomeOnClick, pathname],
+  )
 
   useLayoutEffect(() => {
     if (!mobileOpen) return
@@ -173,12 +198,12 @@ export function Navbar() {
 
   return (
     <header
-      className="pointer-events-none fixed top-0 left-0 z-100 w-full bg-transparent"
-      style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))' }}
+      className="pointer-events-none fixed top-0 left-0 z-11000 w-full transition-colors duration-300"
+      style={headerStyle}
     >
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
+          <Motion.div
             key="nav-mobile-backdrop"
             role="presentation"
             className="pointer-events-auto fixed top-0 left-0 z-0 w-full max-w-full bg-black/70 sm:hidden"
@@ -197,7 +222,7 @@ export function Navbar() {
         <Link
           to="/"
           className="flex shrink-0 items-center"
-          onClick={closeMenu}
+          onClick={handleHomeClick}
           aria-label="Inicio, Simetra"
         >
           <img
@@ -220,6 +245,7 @@ export function Navbar() {
                 to="/"
                 className={`${fontNav} group relative inline-block`}
                 style={linkStyle}
+                onClick={handleHomeClick}
               >
                 Home
                 <span
@@ -260,7 +286,7 @@ export function Navbar() {
           </ul>
           <Link
             to="/postulacion"
-            className="shrink-0 rounded-lg px-4 py-2 text-center text-sm font-semibold shadow-sm transition-[color] duration-100 hover:brightness-95 active:scale-[0.99] font-[family-name:var(--font-subtitle)]"
+            className="shrink-0 rounded-lg px-4 py-2 text-center text-sm font-semibold shadow-sm transition-[color] duration-100 hover:brightness-95 active:scale-[0.99] font-(family-name:--font-subtitle)"
             style={postStyle}
           >
             Postulate
@@ -286,7 +312,7 @@ export function Navbar() {
 
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
+          <Motion.div
             id={menuId}
             key="mobile-panel"
             className="pointer-events-auto relative z-10 sm:hidden"
@@ -297,7 +323,7 @@ export function Navbar() {
             style={{ overflow: 'hidden' }}
             onAnimationComplete={measureMobileDim}
           >
-            <motion.div
+            <Motion.div
               ref={menuRootRef}
               className="mt-0 bg-transparent px-4 pb-8 pt-3"
               data-mobile-menu
@@ -311,7 +337,7 @@ export function Navbar() {
                   <Link
                     to="/"
                     className={`${fontNavMobileMenu} group relative inline-block`}
-                    onClick={closeMenu}
+                    onClick={handleHomeClick}
                   >
                     Home
                     <span
@@ -357,14 +383,14 @@ export function Navbar() {
                 <Link
                   to="/postulacion"
                   onClick={closeMenu}
-                  className="w-full rounded-lg px-6 py-3 text-center text-sm font-semibold shadow-sm font-[family-name:var(--font-subtitle)]"
+                  className="w-full rounded-lg px-6 py-3 text-center text-sm font-semibold shadow-sm font-(family-name:--font-subtitle)"
                   style={postulateMobileStyle}
                 >
                   Postulate
                 </Link>
               </div>
-            </motion.div>
-          </motion.div>
+            </Motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </header>
