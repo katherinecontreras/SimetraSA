@@ -9,11 +9,8 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useGSAP } from '@gsap/react'
-import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { motion } from 'framer-motion'
-import { DraftingCompass, Settings, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { AppearFrom } from '../../animations/AppearFrom'
@@ -21,6 +18,7 @@ import { BounceNudge } from '../../animations/BounceIn'
 import { FadeInAndOut } from '../../animations/FadeInAndOut'
 import { useProyectosRecientesScrollGate } from '../../hooks/home/useProyectosRecientesScrollGate'
 import { useScrollTriggerRefresh } from '../../hooks/useScrollTriggerRefresh'
+import { useScrollBlackOverlayFade } from '../../hooks/home/useScrollBlackOverlayFade'
 import { useSvgPathDrawOnScroll } from '../../hooks/home/useSvgPathDrawOnScroll'
 import { useVisuallySolidBlack } from '../../hooks/home/useVisuallySolidBlack'
 
@@ -40,12 +38,7 @@ import Simetra from '../../assets/seccion1/Simetra.png'
 import Zanja from '../../assets/seccion1/Zanja.png'
 import Camion from '../../assets/seccion1/Camion.png'
 
-import section2Img1 from '../../assets/section2/image1.png'
-import section2Img2 from '../../assets/section2/image2.png'
-import section2Img3 from '../../assets/section2/image3.png'
-import section2Img4 from '../../assets/section2/image4.png'
-import section2Img5 from '../../assets/section2/image5.png'
-
+import iconLogo from '../../assets/IconLogo.png'
 import logobgBlack from '../../assets/section4/logoBGBLACK.png'
 import logobgWhite from '../../assets/section4/logoBGWHITE.png'
 
@@ -57,78 +50,15 @@ import { NuestraHistoriaQuartileMarkers } from '../../components/section3/Nuestr
 import { ServicioDiamondCard } from '../../components/section5/ServicioDiamondCard'
 import { VacanteCard } from '../../components/section5/VacanteCard'
 import { VacantesTransitionShapes } from '../../components/section5/VacantesTransitionShapes'
+import {
+  ASI_TRABAJAMOS_IMAGES,
+  CORTINA,
+  MISION_VISION_CARDS,
+  NUESTROS_SERVICIOS,
+  VACANTES,
+} from '../../constants/home'
 import { NUESTRA_HISTORIA_PARTS } from '../../constants/nuestraHistoria'
 import { PROYECTOS_RECIENTES } from '../../constants/proyectosRecientes'
-/** Solo assets de `src/assets/section2/`. */
-const ASI_TRABAJAMOS_IMAGES = [
-  section2Img1,
-  section2Img2,
-  section2Img3,
-  section2Img4,
-  section2Img5,
-]
-
-const VACANTES = [
-  {
-    title: 'Operario de obra civil',
-    area: 'Ejecución en campo',
-    location: 'Buenos Aires',
-    type: 'Tiempo completo',
-    mode: 'Presencial',
-    salary: 'A convenir',
-    description:
-      'Para tareas de apoyo en zanjeo, tendido y mantenimiento de infraestructura urbana.',
-    requirements: ['Experiencia en obra', 'Disponibilidad horaria', 'Trabajo en equipo'],
-  },
-  {
-    title: 'Técnico en redes',
-    area: 'Infraestructura',
-    location: 'Zona norte',
-    type: 'Tiempo completo',
-    mode: 'Mixto',
-    salary: 'A convenir',
-    description:
-      'Buscamos perfil técnico para relevamientos, soporte de cuadrillas y control de avances.',
-    requirements: ['Lectura de planos', 'Manejo de herramientas', 'Registro de avances'],
-  },
-  {
-    title: 'Coordinador de proyectos',
-    area: 'Planificación',
-    location: 'CABA / AMBA',
-    type: 'Full time',
-    mode: 'Híbrido',
-    salary: 'A definir',
-    description:
-      'Rol orientado a coordinar equipos, organizar cronogramas y acompañar la entrega de proyectos.',
-    requirements: ['Gestión de equipos', 'Comunicación clara', 'Seguimiento de KPIs'],
-  },
-]
-
-const NUESTROS_SERVICIOS = [
-  {
-    title: 'Dirección de Proyectos',
-    Icon: DraftingCompass,
-    description:
-      'Los clientes cada vez más exigentes con el nivel de calidad de sus proveedores, requieren con frecuencia para sus instalaciones un interlocutor que coordine y dirija todo el proceso. Esta coordinación debe ser llevada a cabo por técnicos con demostrada experiencia en la gestión de proyectos en todas sus fases.',
-  },
-  {
-    title: 'Asesoría técnica',
-    Icon: Wrench,
-    description:
-      'La experiencia adquirida por nuestros Profesionales, Supervisores y Encargados de Producción y Servicio, con la creación de vínculos de asistencia con empresas consultoras de distintas especialidades, permiten a SIMETRA SERVICE S.A ofrecer a sus clientes una amplia y flexible gama de servicios de ingeniería.',
-  },
-  {
-    title: 'Montajes mecánicos y eléctricos',
-    Icon: Settings,
-    description:
-      'Desarrollo de proyectos mecánicos y/o eléctricos de instalaciones y procesos industriales, tales como plantas de tratamiento, plantas de inyección e instalaciones de campo',
-  },
-]
-
-const MotionBackdrop = motion.div
-
-/** Cortina al cerrar el detalle: evita el “corte” al quitar `hidden` de las secciones 1–3. */
-const CORTINA = { off: 'off', blocking: 'blocking', fading: 'fading' }
 
 export default function HomePage() {
   const { isMobile, isDesktop, isPhone } = useDeviceType()
@@ -159,6 +89,7 @@ export default function HomePage() {
   const proyectosRecientesSectionRef = useRef(null)
   const vacantesSectionRef = useRef(null)
   const nuestrosServiciosSectionRef = useRef(null)
+  const misionVisionSectionRef = useRef(null)
   const detalleProyectoScrollRef = useRef(null)
   const detalleTouchStartYRef = useRef(null)
   const volverSubirNudgeLastRef = useRef(0)
@@ -397,6 +328,19 @@ export default function HomePage() {
     enabled: loaderExited,
     threshold: 0.12,
   })
+  const misionVisionInView = useRevealWhenVisible(misionVisionSectionRef, {
+    enabled: loaderExited,
+    threshold: 0.12,
+  })
+  const [misionVisionTitleRevealed, setMisionVisionTitleRevealed] = useState(false)
+
+  useEffect(() => {
+    if (!misionVisionInView) return
+    const frame = requestAnimationFrame(() => {
+      setMisionVisionTitleRevealed(true)
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [misionVisionInView])
 
   /** true solo con scroll del hero en 0: al bajar, el Reveal de Services se revierte. */
   const [heroScrollAtStart, setHeroScrollAtStart] = useState(true)
@@ -456,28 +400,10 @@ export default function HomePage() {
     onLineDrawProgress: onHistorialLineDrawProgress,
   })
 
-  useGSAP(
-    () => {
-      if (!loaderExited) return
-
-      const el = scrollBlackOverlayRef.current
-      if (!el) return
-
-      gsap.to(el, {
-        opacity: 1,
-        overwrite: 'auto',
-        scrollTrigger: {
-          trigger: "[data-section='asi-trabajamos']",
-          start: 'top bottom',
-          end: 'top 10%',
-          scrub: true,
-          preventOverlaps: true,
-          fastScrollEnd: true,
-        },
-      })
-    },
-    { dependencies: [loaderExited] },
-  )
+  useScrollBlackOverlayFade({
+    overlayRef: scrollBlackOverlayRef,
+    enabled: loaderExited,
+  })
 
   return (
     <>
@@ -910,9 +836,9 @@ export default function HomePage() {
         <section
           ref={nuestrosServiciosSectionRef}
           data-section="nuestros-servicios"
-          className="relative z-10001 isolate min-h-dvh overflow-hidden bg-transparent text-black"
+          className="relative z-10002 isolate min-h-dvh overflow-visible bg-transparent text-black"
         >
-          <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-7xl flex-col items-center px-4 py-24 sm:px-6 md:px-10 md:py-32">
+          <div className="relative pt-20 z-10 mx-auto flex min-h-dvh w-full max-w-7xl flex-col items-center px-4 py-24 sm:px-6 md:px-10 md:py-32">
             <div className="relative z-50 rounded-full px-6 py-3">
               <SectionTitle
                 text="Nuestros servicios"
@@ -932,6 +858,91 @@ export default function HomePage() {
                 />
               ))}
             </div>
+          </div>
+        </section>
+        <section
+          ref={misionVisionSectionRef}
+          data-section="mision-vision"
+          className="relative z-10001 isolate min-h-dvh overflow-hidden bg-white text-white [--mv-title-h:clamp(27rem,56vh,40rem)] [--mv-video-h:max(100dvh,56.25vw)]"
+        >
+          <iframe
+            title="Video de fondo misión y visión móvil"
+            src="https://www.youtube.com/embed/HjkYFn9ZCWs?autoplay=1&mute=1&loop=1&playlist=HjkYFn9ZCWs&controls=0&disablekb=1&modestbranding=1&playsinline=1&rel=0&start=3"
+            className="pointer-events-none absolute left-1/2 top-0 z-0 h-[190vh] w-[340vw] min-h-[190vw] min-w-[340dvh] -translate-x-1/2 rotate-90 border-0 md:hidden"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
+            aria-hidden
+            tabIndex={-1}
+          />
+          <iframe
+            title="Video de fondo misión y visión"
+            src="https://www.youtube.com/embed/HjkYFn9ZCWs?autoplay=1&mute=1&loop=1&playlist=HjkYFn9ZCWs&controls=0&disablekb=1&modestbranding=1&playsinline=1&rel=0&start=3"
+            className="pointer-events-none absolute left-1/2 top-0 z-0 hidden h-(--mv-video-h) w-[calc(var(--mv-video-h)*1.7778)] -translate-x-1/2 border-0 md:block"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerPolicy="strict-origin-when-cross-origin"
+            aria-hidden
+            tabIndex={-1}
+          />
+          <div
+            className="pointer-events-none absolute inset-x-0 md:-top-9 md:h-10 -top-1 z-9 h-[11vh] bg-white"
+            aria-hidden
+          />
+          <div
+            className="relative z-10 flex min-h-[52vh] w-full flex-col items-center justify-start px-4 pb-32 pt-24 text-black md:h-(--mv-title-h) md:min-h-0 md:pb-44 md:pt-32"
+            style={{
+              backgroundColor: '#ffffff',
+              clipPath: isPhone
+                ? 'polygon( 0% 20% ,   100% 20% ,   50% 50% )'
+                : 'polygon( 0% 0% ,   100% 0% ,   50% 80% )'
+            }}
+          >
+            <SectionTitle
+              text="Misión y visión"
+              isLoaded={misionVisionTitleRevealed}
+              className="text-center text-2xl font-bold uppercase tracking-tight text-black md:text-6xl"
+            />
+            <div className="md:mt-8 flex h-18 w-18 items-center justify-center md:h-36 md:w-36">
+              <img
+                src={iconLogo}
+                alt="Simetra"
+                className="h-full w-full object-contain"
+                width={144}
+                height={144}
+                decoding="async"
+              />
+            </div>
+          </div>
+          <div className="relative z-5 mx-auto -mt-[52vh] grid w-full max-w-xl grid-cols-1 gap-0 px-0 pb-0 md:-mt-(--mv-title-h) md:h-(--mv-video-h) md:w-screen md:max-w-none md:grid-cols-12 md:grid-rows-[3fr_2fr] md:px-0">
+            {MISION_VISION_CARDS.map((card, index) => {
+              const CardIcon = card.Icon
+              return (
+                <article
+                  key={card.title}
+                  className={[
+                    'flex flex-col justify-center border border-white/8 bg-black/25 p-5 text-white shadow-[0_20px_60px_rgba(0,0,0,0.22)] backdrop-blur-md transition-[background-color,box-shadow] duration-500 ease-out hover:bg-black/50 hover:shadow-[0_24px_70px_rgba(0,0,0,0.30)]',
+                    'min-h-64 rounded-none md:min-h-0 md:p-8 md:pt-20',
+                    index === 0 && 'min-h-116 justify-end pb-10 pt-28 md:min-h-0 md:justify-center md:pb-8 md:pt-20',
+                    card.layoutClassName,
+                    card.contentAlignClassName,
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  style={!isPhone && card.clipPath ? { clipPath: card.clipPath } : undefined}
+                >
+                  <div className="mb-4 flex items-center gap-4">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#6CBFE0] text-black shadow-[0_14px_34px_rgba(108,191,224,0.28)] md:h-13 md:w-13">
+                      <CardIcon size={25} strokeWidth={1.9} />
+                    </span>
+                    <h3 className="text-xl font-bold leading-tight uppercase tracking-tight md:text-2xl">
+                      {card.title}
+                    </h3>
+                  </div>
+                  <p className="text-lg leading-relaxed text-white/86 md:text-xl">
+                    {card.description}
+                  </p>
+                </article>
+              )
+            })}
           </div>
         </section>
       </main>
