@@ -170,6 +170,7 @@ export default function HomePage() {
    * (El deslizamiento en `DetailsProyect` móvil depende de esto.)
    */
   const [direcciónDetalleMovil, setDirecciónDetalleMovil] = useState(0)
+  const [servicioActivoMovil, setServicioActivoMovil] = useState(null)
 
   const handleCerrarDetalleProyecto = useCallback(() => {
     if (cierreCortina !== CORTINA.off) return
@@ -836,9 +837,9 @@ export default function HomePage() {
         <section
           ref={nuestrosServiciosSectionRef}
           data-section="nuestros-servicios"
-          className="relative z-10002 isolate min-h-dvh overflow-visible bg-transparent text-black"
+          className="relative z-10002 isolate overflow-visible bg-transparent text-black"
         >
-          <div className="relative pt-20 z-10 mx-auto flex min-h-dvh w-full max-w-7xl flex-col items-center px-4 py-24 sm:px-6 md:px-10 md:py-32">
+          <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center px-4 pb-8 pt-20 sm:px-6 md:px-10 md:pb-10 md:pt-28">
             <div className="relative z-50 rounded-full px-6 py-3">
               <SectionTitle
                 text="Nuestros servicios"
@@ -854,7 +855,9 @@ export default function HomePage() {
                   servicio={servicio}
                   index={index}
                   visible={nuestrosServiciosInView}
-                  autoRevealOnView={isPhone}
+                  clickReveal={isPhone}
+                  isClickActive={isPhone && servicioActivoMovil === index}
+                  onClickReveal={() => setServicioActivoMovil(index)}
                 />
               ))}
             </div>
@@ -888,7 +891,7 @@ export default function HomePage() {
             aria-hidden
           />
           <div
-            className="relative z-10 flex min-h-[52vh] w-full flex-col items-center justify-start px-4 pb-32 pt-24 text-black md:h-(--mv-title-h) md:min-h-0 md:pb-44 md:pt-32"
+            className="relative z-10 flex min-h-[56vh] w-full flex-col items-center justify-start px-4 pb-40 pt-24 text-black md:h-(--mv-title-h) md:min-h-0 md:pb-44 md:pt-32"
             style={{
               backgroundColor: '#ffffff',
               clipPath: isPhone
@@ -912,7 +915,7 @@ export default function HomePage() {
               />
             </div>
           </div>
-          <div className="relative z-5 mx-auto -mt-[52vh] grid w-full max-w-xl grid-cols-1 gap-0 px-0 pb-0 md:-mt-(--mv-title-h) md:h-(--mv-video-h) md:w-screen md:max-w-none md:grid-cols-12 md:grid-rows-[3fr_2fr] md:px-0">
+          <div className="relative z-5 mx-auto -mt-[56vh] grid w-full max-w-xl grid-cols-1 gap-0 px-0 pb-0 md:-mt-(--mv-title-h) md:h-(--mv-video-h) md:w-screen md:max-w-none md:grid-cols-12 md:grid-rows-[3fr_2fr] md:px-0">
             {MISION_VISION_CARDS.map((card, index) => {
               const CardIcon = card.Icon
               return (

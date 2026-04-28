@@ -7,11 +7,19 @@ const HOVER_ANIMATION = {
   transition: { type: 'spring', stiffness: 180, damping: 24, mass: 0.8 },
 }
 
-export function ServicioDiamondCard({ servicio, index, visible, autoRevealOnView = false }) {
+export function ServicioDiamondCard({
+  servicio,
+  index,
+  visible,
+  clickReveal = false,
+  isClickActive = false,
+  onClickReveal,
+}) {
   const ServicioIcon = servicio.Icon
   const cardRef = useRef(null)
-  const [active, setActive] = useState(false)
+  const [hoverActive, setHoverActive] = useState(false)
   const [typedText, setTypedText] = useState('')
+  const active = clickReveal ? isClickActive : hoverActive
 
   useEffect(() => {
     if (!active) return
@@ -28,39 +36,22 @@ export function ServicioDiamondCard({ servicio, index, visible, autoRevealOnView
     return () => window.clearInterval(intervalId)
   }, [active, servicio.description])
 
-  useEffect(() => {
-    if (!autoRevealOnView) return
-
-    const el = cardRef.current
-    if (!el) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setTypedText('')
-          setActive(true)
-          observer.disconnect()
-          return
-        }
-      },
-      {
-        threshold: 0.35,
-        rootMargin: '-8% 0px -12% 0px',
-      },
-    )
-
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [autoRevealOnView])
-
   const showDetails = () => {
+    if (clickReveal) return
     setTypedText('')
-    setActive(true)
+    setHoverActive(true)
   }
 
   const hideDetails = () => {
-    setActive(false)
+    if (clickReveal) return
+    setHoverActive(false)
     setTypedText('')
+  }
+
+  const handleClick = () => {
+    if (!clickReveal) return
+    setTypedText('')
+    onClickReveal?.()
   }
 
   return (
@@ -68,13 +59,14 @@ export function ServicioDiamondCard({ servicio, index, visible, autoRevealOnView
       ref={cardRef}
       initial={{ opacity: 0, y: 30 }}
       animate={visible ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      whileHover={autoRevealOnView ? undefined : HOVER_ANIMATION}
-      whileFocus={autoRevealOnView ? undefined : HOVER_ANIMATION}
+      whileHover={clickReveal ? undefined : HOVER_ANIMATION}
+      whileFocus={clickReveal ? undefined : HOVER_ANIMATION}
       transition={{ duration: 0.55, delay: index * 0.12, ease: 'easeOut' }}
       onPointerEnter={showDetails}
       onPointerLeave={hideDetails}
       onFocus={showDetails}
       onBlur={hideDetails}
+      onClick={handleClick}
       tabIndex={0}
       className={[
         'group flex rotate-45 items-center justify-center rounded-[2.4rem] border border-white/45 bg-white/90 text-black shadow-[0_24px_70px_rgba(0,0,0,0.16)] backdrop-blur-md',
