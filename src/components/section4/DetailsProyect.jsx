@@ -7,12 +7,8 @@ import { CapaMediaProyecto } from './CapaMediaProyecto'
 export function DetailsProyect({
   proyecto,
   isPhone = false,
-  onSeguirBajando,
-  onVolverArriba,
   onVerMedia,
   mediaVisible = false,
-  seguirBajandoNudgeTick = 0,
-  volverSubirNudgeTick = 0,
 }) {
   if (!proyecto) return null
 
@@ -29,12 +25,8 @@ export function DetailsProyect({
       <CapaInfo
         proyecto={proyecto}
         isPhone={isPhone}
-        onSeguirBajando={onSeguirBajando}
-        onVolverArriba={onVolverArriba}
         onVerMedia={onVerMedia}
         visible={!mediaVisible}
-        seguirBajandoNudgeTick={seguirBajandoNudgeTick}
-        volverSubirNudgeTick={volverSubirNudgeTick}
       />
     </div>
   )

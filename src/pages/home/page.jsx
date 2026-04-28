@@ -13,7 +13,8 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { motion } from 'framer-motion'
-import { ArrowUp } from 'lucide-react'
+import { DraftingCompass, Settings, Wrench } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import { AppearFrom } from '../../animations/AppearFrom'
 import { BounceNudge } from '../../animations/BounceIn'
@@ -53,6 +54,9 @@ import { DetailsProyect } from '../../components/section4/DetailsProyect'
 import { NuestraHistoriaMobileStack } from '../../components/section3/NuestraHistoriaMobileStack'
 import { NuestraHistoriaQuartileLabels } from '../../components/section3/NuestraHistoriaQuartileLabels'
 import { NuestraHistoriaQuartileMarkers } from '../../components/section3/NuestraHistoriaQuartileMarkers'
+import { ServicioDiamondCard } from '../../components/section5/ServicioDiamondCard'
+import { VacanteCard } from '../../components/section5/VacanteCard'
+import { VacantesTransitionShapes } from '../../components/section5/VacantesTransitionShapes'
 import { NUESTRA_HISTORIA_PARTS } from '../../constants/nuestraHistoria'
 import { PROYECTOS_RECIENTES } from '../../constants/proyectosRecientes'
 /** Solo assets de `src/assets/section2/`. */
@@ -62,6 +66,63 @@ const ASI_TRABAJAMOS_IMAGES = [
   section2Img3,
   section2Img4,
   section2Img5,
+]
+
+const VACANTES = [
+  {
+    title: 'Operario de obra civil',
+    area: 'Ejecución en campo',
+    location: 'Buenos Aires',
+    type: 'Tiempo completo',
+    mode: 'Presencial',
+    salary: 'A convenir',
+    description:
+      'Para tareas de apoyo en zanjeo, tendido y mantenimiento de infraestructura urbana.',
+    requirements: ['Experiencia en obra', 'Disponibilidad horaria', 'Trabajo en equipo'],
+  },
+  {
+    title: 'Técnico en redes',
+    area: 'Infraestructura',
+    location: 'Zona norte',
+    type: 'Tiempo completo',
+    mode: 'Mixto',
+    salary: 'A convenir',
+    description:
+      'Buscamos perfil técnico para relevamientos, soporte de cuadrillas y control de avances.',
+    requirements: ['Lectura de planos', 'Manejo de herramientas', 'Registro de avances'],
+  },
+  {
+    title: 'Coordinador de proyectos',
+    area: 'Planificación',
+    location: 'CABA / AMBA',
+    type: 'Full time',
+    mode: 'Híbrido',
+    salary: 'A definir',
+    description:
+      'Rol orientado a coordinar equipos, organizar cronogramas y acompañar la entrega de proyectos.',
+    requirements: ['Gestión de equipos', 'Comunicación clara', 'Seguimiento de KPIs'],
+  },
+]
+
+const NUESTROS_SERVICIOS = [
+  {
+    title: 'Dirección de Proyectos',
+    Icon: DraftingCompass,
+    description:
+      'Los clientes cada vez más exigentes con el nivel de calidad de sus proveedores, requieren con frecuencia para sus instalaciones un interlocutor que coordine y dirija todo el proceso. Esta coordinación debe ser llevada a cabo por técnicos con demostrada experiencia en la gestión de proyectos en todas sus fases.',
+  },
+  {
+    title: 'Asesoría técnica',
+    Icon: Wrench,
+    description:
+      'La experiencia adquirida por nuestros Profesionales, Supervisores y Encargados de Producción y Servicio, con la creación de vínculos de asistencia con empresas consultoras de distintas especialidades, permiten a SIMETRA SERVICE S.A ofrecer a sus clientes una amplia y flexible gama de servicios de ingeniería.',
+  },
+  {
+    title: 'Montajes mecánicos y eléctricos',
+    Icon: Settings,
+    description:
+      'Desarrollo de proyectos mecánicos y/o eléctricos de instalaciones y procesos industriales, tales como plantas de tratamiento, plantas de inyección e instalaciones de campo',
+  },
 ]
 
 const MotionBackdrop = motion.div
@@ -96,11 +157,11 @@ export default function HomePage() {
   const nuestraHistoriaSectionRef = useRef(null)
   /** Tope de scroll en el inicio de “proyectos recientes” (sección 4). */
   const proyectosRecientesSectionRef = useRef(null)
+  const vacantesSectionRef = useRef(null)
+  const nuestrosServiciosSectionRef = useRef(null)
   const detalleProyectoScrollRef = useRef(null)
   const detalleTouchStartYRef = useRef(null)
-  const seguirBajandoNudgeLastRef = useRef(0)
   const volverSubirNudgeLastRef = useRef(0)
-  const volverSubirHoverTimeoutRef = useRef(null)
   /** Atrás: detectar cierre de detalle (antes: detalle abierto, ahora: lista). */
   const prevOcultoDetalleRef = useRef(false)
   const servicesBlockRef = useRef(null)
@@ -114,23 +175,25 @@ export default function HomePage() {
   const historiaLineScrollStartRef = useRef(null)
   /** 0 = sin trazo, 1 = línea completa; sincronizado con el stroke del path (mismos hitos que los iconos). */
   const [historiaLineDrawProgress, setHistoriaLineDrawProgress] = useState(0)
-  const [seguirBajandoNudgeTick, setSeguirBajandoNudgeTick] = useState(0)
-  const [volverSubirNudgeTick, setVolverSubirNudgeTick] = useState(0)
-  const [volverSubirHoverActivo, setVolverSubirHoverActivo] = useState(false)
 
   const loaderExited = !showLoader
 
   const ocultoPorDetalle = Boolean(proyectoRecientePresionadoId)
+  const [detalleCubiertoPorVacantes, setDetalleCubiertoPorVacantes] = useState(false)
 
   const activeHomeSection = useHomeNavSectionAt({
     heroRef: heroSectionRef,
     s2Ref: asiTrabajamosSectionRef,
     s3Ref: nuestraHistoriaSectionRef,
     s4Ref: proyectosRecientesSectionRef,
-    enabled: loaderExited && !ocultoPorDetalle,
+    s5Ref: vacantesSectionRef,
+    enabled: loaderExited,
   })
 
   const barNavLightBlend = useMemo(() => {
+    if (activeHomeSection === 'vacantes') {
+      return 0
+    }
     if (proyectoRecientePresionadoId) {
       return 1
     }
@@ -151,8 +214,8 @@ export default function HomePage() {
   }, [barNavLightBlend, setNavLightBlend])
 
   useEffect(() => {
-    setNavBackdropBlend(ocultoPorDetalle && !isPhone ? 1 : 0)
-  }, [isPhone, ocultoPorDetalle, setNavBackdropBlend])
+    setNavBackdropBlend(ocultoPorDetalle && activeHomeSection !== 'vacantes' && !isPhone ? 1 : 0)
+  }, [activeHomeSection, isPhone, ocultoPorDetalle, setNavBackdropBlend])
 
   useEffect(() => {
     setNavReloadHomeOnClick(ocultoPorDetalle)
@@ -163,9 +226,6 @@ export default function HomePage() {
       setNavLightBlend(0)
       setNavBackdropBlend(0)
       setNavReloadHomeOnClick(false)
-      if (volverSubirHoverTimeoutRef.current) {
-        window.clearTimeout(volverSubirHoverTimeoutRef.current)
-      }
     }
   }, [setNavBackdropBlend, setNavLightBlend, setNavReloadHomeOnClick])
 
@@ -179,15 +239,6 @@ export default function HomePage() {
    * (El deslizamiento en `DetailsProyect` móvil depende de esto.)
    */
   const [direcciónDetalleMovil, setDirecciónDetalleMovil] = useState(0)
-
-  const scrollDetalleProyecto = useCallback((direction) => {
-    const el = detalleProyectoScrollRef.current
-    if (!el) return
-    el.scrollBy({
-      top: direction * Math.max(el.clientHeight * 0.75, 240),
-      behavior: 'smooth',
-    })
-  }, [])
 
   const handleCerrarDetalleProyecto = useCallback(() => {
     if (cierreCortina !== CORTINA.off) return
@@ -205,28 +256,10 @@ export default function HomePage() {
     const now = performance.now()
     if (now - volverSubirNudgeLastRef.current < 260) return
     volverSubirNudgeLastRef.current = now
-    setVolverSubirNudgeTick((tick) => tick + 1)
-    if (!isPhone) {
-      setVolverSubirHoverActivo(true)
-      if (volverSubirHoverTimeoutRef.current) {
-        window.clearTimeout(volverSubirHoverTimeoutRef.current)
-      }
-      volverSubirHoverTimeoutRef.current = window.setTimeout(() => {
-        setVolverSubirHoverActivo(false)
-        volverSubirHoverTimeoutRef.current = null
-      }, 520)
-    }
     window.setTimeout(handleCerrarDetalleProyecto, 120)
-  }, [handleCerrarDetalleProyecto, isPhone])
+  }, [handleCerrarDetalleProyecto])
 
   const handleDetalleProyectoWheel = useCallback((event) => {
-    const now = performance.now()
-    if (event.deltaY > 0) {
-      if (now - seguirBajandoNudgeLastRef.current < 260) return
-      seguirBajandoNudgeLastRef.current = now
-      setSeguirBajandoNudgeTick((tick) => tick + 1)
-      return
-    }
     if (event.deltaY < 0) {
       activarVolverDesdeScroll()
     }
@@ -266,6 +299,32 @@ export default function HomePage() {
   useLayoutEffect(() => {
     if (!ocultoPorDetalle) return
     window.scrollTo(0, 0)
+  }, [ocultoPorDetalle])
+
+  useEffect(() => {
+    let frame = null
+
+    const update = () => {
+      if (frame != null) return
+      frame = requestAnimationFrame(() => {
+        frame = null
+        const top = vacantesSectionRef.current?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY
+        const cubierto = ocultoPorDetalle && top <= 1
+        setDetalleCubiertoPorVacantes((prev) => (prev === cubierto ? prev : cubierto))
+      })
+    }
+
+    update()
+    window.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update, { passive: true })
+
+    return () => {
+      if (frame != null) {
+        cancelAnimationFrame(frame)
+      }
+      window.removeEventListener('scroll', update)
+      window.removeEventListener('resize', update)
+    }
   }, [ocultoPorDetalle])
 
   useLayoutEffect(() => {
@@ -329,6 +388,14 @@ export default function HomePage() {
   const nuestraHistoriaInViewport = useRevealWhenVisible(nuestraHistoriaSectionRef, {
     enabled: loaderExited,
     threshold: 0,
+  })
+  const vacantesInView = useRevealWhenVisible(vacantesSectionRef, {
+    enabled: loaderExited,
+    threshold: 0.12,
+  })
+  const nuestrosServiciosInView = useRevealWhenVisible(nuestrosServiciosSectionRef, {
+    enabled: loaderExited,
+    threshold: 0.12,
   })
 
   /** true solo con scroll del hero en 0: al bajar, el Reveal de Services se revierte. */
@@ -651,22 +718,6 @@ export default function HomePage() {
                 Recientes
               </h1>
             </div>
-            {ocultoPorDetalle && !detalleMediaVisible && (
-              <BounceNudge
-                nudgeId="volver-a-subir"
-                tick={volverSubirNudgeTick}
-                as={motion.button}
-                type="button"
-                onClick={handleCerrarDetalleProyecto}
-                className={[
-                  'absolute top-1/2 right-8 hidden -translate-y-1/2 items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold uppercase tracking-wide text-black shadow-lg transition md:flex',
-                  volverSubirHoverActivo ? 'bg-[#6CBFE0]' : 'bg-white hover:bg-[#6CBFE0]',
-                ].join(' ')}
-              >
-                Volver a subir
-                <ArrowUp className="h-4 w-4" aria-hidden />
-              </BounceNudge>
-            )}
           </div>
           <div
             id="titulos-de-cada-pryoecto"
@@ -748,7 +799,7 @@ export default function HomePage() {
               })}
             </div>
           </div>
-          {ocultoPorDetalle && (
+          {ocultoPorDetalle && !detalleCubiertoPorVacantes && (
             <div className="relative z-30 h-0">
               <AppearFrom
                 from="left"
@@ -774,7 +825,7 @@ export default function HomePage() {
               Selecciona el Proyecto para ver el detalle →
             </p>
           )}
-          {ocultoPorDetalle && proyectoSeleccionado && (
+          {ocultoPorDetalle && proyectoSeleccionado && !detalleCubiertoPorVacantes && (
             <div
               ref={detalleProyectoScrollRef}
               onWheel={handleDetalleProyectoWheel}
@@ -790,12 +841,8 @@ export default function HomePage() {
               <DetailsProyect
                 proyecto={proyectoSeleccionado}
                 isPhone={isPhone}
-                onSeguirBajando={() => scrollDetalleProyecto(1)}
-                onVolverArriba={handleCerrarDetalleProyecto}
                 onVerMedia={() => setDetalleMediaVisible(true)}
                 mediaVisible={detalleMediaVisible}
-                seguirBajandoNudgeTick={seguirBajandoNudgeTick}
-                volverSubirNudgeTick={volverSubirNudgeTick}
                 direcciónSlide={direcciónDetalleMovil}
                 onCambiarProyecto={isPhone ? handleCambiarProyectoMovil : undefined}
                 onCerrar={handleCerrarDetalleProyecto}
@@ -804,13 +851,87 @@ export default function HomePage() {
           )}
         </section>
         <section
+          ref={vacantesSectionRef}
           data-section="vacantes"
-          className="relative z-10000 min-h-dvh rounded-t-2xl bg-white text-black"
+          className="relative z-10000 isolate overflow-visible rounded-t-4xl bg-white text-black"
         >
-          <div className="flex min-h-dvh w-full items-start justify-center px-4 pt-24 md:pt-32">
-            <h1 className="text-center text-3xl font-bold uppercase tracking-tight md:text-6xl">
-              Vacantes
-            </h1>
+          <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+            <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#6CBFE0]/25 blur-3xl" />
+            <div className="absolute -right-32 bottom-20 h-80 w-80 rounded-full bg-black/8 blur-3xl" />
+            <div className="absolute inset-x-0 top-0 h-40 bg-linear-to-b from-[#6CBFE0]/14 to-transparent" />
+          </div>
+          <VacantesTransitionShapes
+            enabled={loaderExited}
+            vacantesSectionRef={vacantesSectionRef}
+            serviciosSectionRef={nuestrosServiciosSectionRef}
+          />
+
+          <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-7xl flex-col px-4 py-20 sm:px-6 md:px-10 md:py-28">
+            <div className="flex flex-col items-center gap-5 text-center">
+              <span className="rounded-full border border-[#6CBFE0]/60 bg-[#6CBFE0]/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-[#217a9f]">
+                Sumate al equipo
+              </span>
+              <SectionTitle
+                text="Vacantes"
+                isLoaded={vacantesInView}
+                className="text-center text-4xl font-bold uppercase tracking-tight text-black md:text-6xl"
+              />
+              <p className="max-w-2xl text-center text-xl leading-relaxed text-black/70 md:text-2xl">
+                Estamos armando nuevos equipos para próximos proyectos. Estas búsquedas son
+                ficticias por ahora, pero muestran el formato que tendrá la sección.
+              </p>
+            </div>
+
+            <div className="mt-14 grid gap-5 md:grid-cols-3 md:gap-6">
+              {VACANTES.map((vacante, index) => (
+                <VacanteCard
+                  key={vacante.title}
+                  vacante={vacante}
+                  index={index}
+                  visible={vacantesInView}
+                />
+              ))}
+            </div>
+
+            <div className="mt-10 flex flex-col items-center gap-5 rounded-3xl border border-black/10 bg-black px-6 py-7 text-center text-white shadow-[0_24px_70px_rgba(0,0,0,0.18)] md:px-10">
+              <p className="text-xl leading-relaxed md:text-2xl">
+                ¿No ves una vacante para vos? Pronto vamos a sumar más búsquedas para obra,
+                logística y administración.
+              </p>
+              <Link
+                to="/postulacion"
+                className="inline-flex items-center justify-center rounded-full border border-[#6CBFE0] bg-[#6CBFE0] px-6 py-3 text-sm font-bold uppercase tracking-[0.2em] text-black transition duration-300 hover:bg-transparent hover:text-[#6CBFE0]"
+              >
+                Ver todos los puestos
+              </Link>
+            </div>
+          </div>
+        </section>
+        <section
+          ref={nuestrosServiciosSectionRef}
+          data-section="nuestros-servicios"
+          className="relative z-10001 isolate min-h-dvh overflow-hidden bg-transparent text-black"
+        >
+          <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-7xl flex-col items-center px-4 py-24 sm:px-6 md:px-10 md:py-32">
+            <div className="relative z-50 rounded-full px-6 py-3">
+              <SectionTitle
+                text="Nuestros servicios"
+                isLoaded={nuestrosServiciosInView}
+                className="text-center text-4xl font-bold uppercase tracking-tight text-black md:text-6xl"
+              />
+            </div>
+
+            <div className="relative mt-12 flex min-h-288 w-full flex-col items-center gap-24 md:mt-10 md:min-h-216 md:block">
+              {NUESTROS_SERVICIOS.map((servicio, index) => (
+                <ServicioDiamondCard
+                  key={servicio.title}
+                  servicio={servicio}
+                  index={index}
+                  visible={nuestrosServiciosInView}
+                  autoRevealOnView={isPhone}
+                />
+              ))}
+            </div>
           </div>
         </section>
       </main>

@@ -1,7 +1,4 @@
 import { AppearFrom } from '../../animations/AppearFrom'
-import { BounceNudge } from '../../animations/BounceIn'
-import { ArrowDown, ArrowUp } from 'lucide-react'
-import { motion as Motion } from 'framer-motion'
 import { MapContainer, Marker, TileLayer } from 'react-leaflet'
 
 const DIRECCION_INFO = {
@@ -20,12 +17,8 @@ const POSICION_INFO = {
 export function CapaInfo({
   proyecto,
   isPhone = false,
-  onSeguirBajando,
-  onVolverArriba,
   onVerMedia,
   visible = true,
-  seguirBajandoNudgeTick = 0,
-  volverSubirNudgeTick = 0,
 }) {
   if (!proyecto) return null
   const parrafos = Array.isArray(proyecto.parrafos) ? proyecto.parrafos : []
@@ -37,9 +30,6 @@ export function CapaInfo({
   const tieneVideo = tipoMediaNormalizado === 'video' && proyecto.video
   const tieneMedia = tipoMediaNormalizado !== 'nada' && (tieneVideo || proyecto.imagenes?.length > 0)
   const textoLink = tieneVideo ? 'Ver video' : 'Ver imagenes'
-  const controlNudgeTick = isPhone
-    ? seguirBajandoNudgeTick + volverSubirNudgeTick
-    : seguirBajandoNudgeTick
 
   return (
     <AppearFrom
@@ -86,45 +76,6 @@ export function CapaInfo({
             {textoLink}
           </button>
         ) : null}
-        <BounceNudge
-          nudgeId={`seguir-bajando-${proyecto.id}`}
-          tick={controlNudgeTick}
-          as={Motion.div}
-          className={[
-            'absolute bottom-0 left-1/2 flex h-15 -translate-x-1/2 items-center justify-center rounded-t-2xl text-[#6CBFE0]',
-            isPhone ? 'w-80 gap-10' : 'w-[60%]',
-          ].join(' ')}
-        >
-          {isPhone ? (
-            <>
-              <button
-                type="button"
-                onClick={onVolverArriba}
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-[#6CBFE0]"
-                aria-label="Volver a subir"
-              >
-                <ArrowUp className="h-7 w-7" aria-hidden />
-              </button>
-              <button
-                type="button"
-                onClick={onSeguirBajando}
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-[#6CBFE0]"
-                aria-label="Seguir bajando"
-              >
-                <ArrowDown className="h-7 w-7" aria-hidden />
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={onSeguirBajando}
-              className="flex h-full w-full items-center justify-center gap-2 text-center text-base font-semibold uppercase tracking-wide"
-            >
-              Seguir bajando
-              <ArrowDown className="h-5 w-5" aria-hidden />
-            </button>
-          )}
-        </BounceNudge>
       </div>
     </AppearFrom>
   )
