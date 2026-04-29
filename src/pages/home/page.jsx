@@ -41,6 +41,15 @@ import Camion from '../../assets/seccion1/Camion.png'
 import iconLogo from '../../assets/IconLogo.png'
 import logobgBlack from '../../assets/section4/logoBGBLACK.png'
 import logobgWhite from '../../assets/section4/logoBGWHITE.png'
+import clienteEnarsa from '../../assets/section6/Enarsa.png'
+import clientePanamerica from '../../assets/section6/Panamerica.png'
+import clientePetrobras from '../../assets/section6/Petrobras.png'
+import clientePluspetrol from '../../assets/section6/Pluspetrol.png'
+import clienteSinopec from '../../assets/section6/Sinopec.png'
+import clienteTecpetrol from '../../assets/section6/Tecpetrol.png'
+import clienteTgs from '../../assets/section6/Tgs.png'
+import clienteTuboscope from '../../assets/section6/Tuboscope.png'
+import clienteYpf from '../../assets/section6/Ypf.png'
 
 import { CylinderCarousel } from '../../components/section2/CylinderCarousel'
 import { DetailsProyect } from '../../components/section4/DetailsProyect'
@@ -50,6 +59,7 @@ import { NuestraHistoriaQuartileMarkers } from '../../components/section3/Nuestr
 import { ServicioDiamondCard } from '../../components/section5/ServicioDiamondCard'
 import { VacanteCard } from '../../components/section5/VacanteCard'
 import { VacantesTransitionShapes } from '../../components/section5/VacantesTransitionShapes'
+import { ClientesOrbit } from '../../components/section6/ClientesOrbit'
 import {
   ASI_TRABAJAMOS_IMAGES,
   CORTINA,
@@ -59,6 +69,25 @@ import {
 } from '../../constants/home'
 import { NUESTRA_HISTORIA_PARTS } from '../../constants/nuestraHistoria'
 import { PROYECTOS_RECIENTES } from '../../constants/proyectosRecientes'
+
+const CLIENTES_IMAGES = [
+  { src: clienteEnarsa, alt: 'Enarsa' },
+  { src: clientePanamerica, alt: 'Panamerica' },
+  { src: clientePetrobras, alt: 'Petrobras' },
+  { src: clientePluspetrol, alt: 'Pluspetrol' },
+  { src: clienteSinopec, alt: 'Sinopec' },
+  { src: clienteTecpetrol, alt: 'Tecpetrol' },
+  { src: clienteTgs, alt: 'TGS' },
+  { src: clienteTuboscope, alt: 'Tuboscope' },
+  { src: clienteYpf, alt: 'YPF' },
+]
+
+function useSectionReveal(sectionRef, threshold, enabled) {
+  return useRevealWhenVisible(sectionRef, {
+    enabled,
+    threshold,
+  })
+}
 
 export default function HomePage() {
   const { isMobile, isDesktop, isPhone } = useDeviceType()
@@ -90,6 +119,7 @@ export default function HomePage() {
   const vacantesSectionRef = useRef(null)
   const nuestrosServiciosSectionRef = useRef(null)
   const misionVisionSectionRef = useRef(null)
+  const nuestrosClientesSectionRef = useRef(null)
   const detalleProyectoScrollRef = useRef(null)
   const detalleTouchStartYRef = useRef(null)
   const volverSubirNudgeLastRef = useRef(0)
@@ -118,11 +148,14 @@ export default function HomePage() {
     s3Ref: nuestraHistoriaSectionRef,
     s4Ref: proyectosRecientesSectionRef,
     s5Ref: vacantesSectionRef,
+    s6Ref: nuestrosServiciosSectionRef,
+    s7Ref: misionVisionSectionRef,
+    s8Ref: nuestrosClientesSectionRef,
     enabled: loaderExited,
   })
 
   const barNavLightBlend = useMemo(() => {
-    if (activeHomeSection === 'vacantes') {
+    if (activeHomeSection === 'vacantes' || activeHomeSection === 'nuestros-servicios') {
       return 0
     }
     if (proyectoRecientePresionadoId) {
@@ -132,6 +165,9 @@ export default function HomePage() {
       return 1
     }
     if (activeHomeSection === 'proyectos-recientes') {
+      return 1
+    }
+    if (activeHomeSection === 'mision-vision' || activeHomeSection === 'nuestros-clientes') {
       return 1
     }
     if (activeHomeSection === 'hero') {
@@ -304,35 +340,15 @@ export default function HomePage() {
     return () => window.clearTimeout(t)
   }, [cierreCortina])
 
-  const servicesInView = useRevealWhenVisible(servicesBlockRef, {
-    enabled: loaderExited,
-    threshold: 0.25,
-  })
-  const asiTrabajamosInView = useRevealWhenVisible(asiTrabajamosSectionRef, {
-    enabled: loaderExited,
-    threshold: 0.15,
-  })
-  const nuestraHistoriaInView = useRevealWhenVisible(nuestraHistoriaSectionRef, {
-    enabled: loaderExited,
-    threshold: 0.15,
-  })
+  const servicesInView = useSectionReveal(servicesBlockRef, 0.25, loaderExited)
+  const asiTrabajamosInView = useSectionReveal(asiTrabajamosSectionRef, 0.15, loaderExited)
+  const nuestraHistoriaInView = useSectionReveal(nuestraHistoriaSectionRef, 0.15, loaderExited)
   /** Cualquier intersección con el viewport (umbral 0): para el backdrop negro, antes que el de Reveal a 0.15. */
-  const nuestraHistoriaInViewport = useRevealWhenVisible(nuestraHistoriaSectionRef, {
-    enabled: loaderExited,
-    threshold: 0,
-  })
-  const vacantesInView = useRevealWhenVisible(vacantesSectionRef, {
-    enabled: loaderExited,
-    threshold: 0.12,
-  })
-  const nuestrosServiciosInView = useRevealWhenVisible(nuestrosServiciosSectionRef, {
-    enabled: loaderExited,
-    threshold: 0.12,
-  })
-  const misionVisionInView = useRevealWhenVisible(misionVisionSectionRef, {
-    enabled: loaderExited,
-    threshold: 0.12,
-  })
+  const nuestraHistoriaInViewport = useSectionReveal(nuestraHistoriaSectionRef, 0, loaderExited)
+  const vacantesInView = useSectionReveal(vacantesSectionRef, 0.12, loaderExited)
+  const nuestrosServiciosInView = useSectionReveal(nuestrosServiciosSectionRef, 0.12, loaderExited)
+  const misionVisionInView = useSectionReveal(misionVisionSectionRef, 0.12, loaderExited)
+  const nuestrosClientesInView = useSectionReveal(nuestrosClientesSectionRef, 0.2, loaderExited)
   const [misionVisionTitleRevealed, setMisionVisionTitleRevealed] = useState(false)
 
   useEffect(() => {
@@ -497,6 +513,11 @@ export default function HomePage() {
             .filter(Boolean)
             .join(' ')}
         >
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
+            <div className="absolute -left-28 top-16 h-64 w-64 rounded-full bg-[#6CBFE0]/24 blur-[95px] md:h-96 md:w-96" />
+            <div className="absolute right-[8%] top-[22%] h-44 w-44 rounded-full bg-[#6CBFE0]/20 blur-[80px] md:h-72 md:w-72" />
+            <div className="absolute bottom-42 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-[#6CBFE0]/16 blur-[100px] md:h-84 md:w-84" />
+          </div>
           <div className="relative z-20 flex w-full min-w-0 max-w-full flex-col items-center px-3 pt-[clamp(3.5rem,12vh,8rem)] sm:min-h-0 sm:flex-1 sm:px-4 sm:pt-[clamp(4rem,14vh,8rem)] min-[1024px]:min-h-0 min-[1024px]:pb-[min(28vh,12rem)] max-sm:pb-8">
             <SectionTitle
               key={asiTrabajamosInView ? 'asi-trabajamos-visible' : 'asi-trabajamos-hidden'}
@@ -527,6 +548,11 @@ export default function HomePage() {
             ].join(' ')}
             aria-hidden
           />
+          <div className="pointer-events-none absolute inset-0 z-2 overflow-hidden" aria-hidden>
+            <div className="absolute left-[6%] top-12 h-56 w-56 rounded-full bg-[#6CBFE0]/22 blur-[90px] md:h-88 md:w-88" />
+            <div className="absolute -right-24 top-[30%] h-64 w-64 rounded-full bg-[#6CBFE0]/18 blur-[105px] md:h-104 md:w-104" />
+            <div className="absolute bottom-[52%] left-[20%] h-48 w-48 rounded-full bg-[#6CBFE0]/16 blur-[85px] md:h-80 md:w-80" />
+          </div>
           <div className="relative z-20 flex w-full min-w-0 flex-1 flex-col items-center px-3 pb-12 md:pt-[clamp(3.5rem,12vh,8rem)] sm:px-4 sm:pb-16 sm:pt-0">
             <SectionTitle
               text="Nuestra historia"
@@ -837,9 +863,9 @@ export default function HomePage() {
         <section
           ref={nuestrosServiciosSectionRef}
           data-section="nuestros-servicios"
-          className="relative z-10002 isolate overflow-visible bg-transparent text-black"
+          className="relative z-10002 isolate min-h-dvh overflow-visible bg-transparent text-black"
         >
-          <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col items-center px-4 pb-8 pt-20 sm:px-6 md:px-10 md:pb-10 md:pt-28">
+          <div className="relative pt-20 z-10 mx-auto flex min-h-dvh w-full max-w-7xl flex-col items-center px-4 py-24 sm:px-6 md:px-10 md:py-32">
             <div className="relative z-50 rounded-full px-6 py-3">
               <SectionTitle
                 text="Nuestros servicios"
@@ -887,7 +913,7 @@ export default function HomePage() {
             tabIndex={-1}
           />
           <div
-            className="pointer-events-none absolute inset-x-0 md:-top-9 md:h-10 -top-1 z-9 h-[11vh] bg-white"
+            className="pointer-events-none absolute inset-x-0 -top-14 z-9 h-[18vh] bg-white md:-top-9 md:h-10"
             aria-hidden
           />
           <div
@@ -946,6 +972,29 @@ export default function HomePage() {
                 </article>
               )
             })}
+          </div>
+        </section>
+        <section
+          ref={nuestrosClientesSectionRef}
+          data-section="nuestros-clientes"
+          className="relative z-10001 isolate h-screen overflow-hidden bg-black text-white"
+        >
+          <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
+            <div className="absolute left-[8%] top-[12%] h-52 w-52 rounded-full bg-[#6CBFE0]/35 blur-[90px] md:h-72 md:w-72" />
+            <div className="absolute right-[10%] top-[18%] h-44 w-44 rounded-full bg-[#6CBFE0]/30 blur-[80px] md:h-64 md:w-64" />
+            <div className="absolute bottom-[10%] left-[16%] h-48 w-48 rounded-full bg-[#6CBFE0]/25 blur-[85px] md:h-72 md:w-72" />
+            <div className="absolute bottom-[14%] right-[18%] h-40 w-40 rounded-full bg-[#6CBFE0]/25 blur-[75px] md:h-60 md:w-60" />
+            <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#6CBFE0]/16 blur-[110px] md:h-96 md:w-96" />
+          </div>
+
+          <ClientesOrbit clientes={CLIENTES_IMAGES} visible={nuestrosClientesInView} isPhone={isPhone} />
+
+          <div className="pointer-events-none relative z-20 flex h-full w-full items-center justify-center px-4 text-center">
+            <SectionTitle
+              text="Nuestros clientes"
+              isLoaded={nuestrosClientesInView}
+              className="text-center text-3xl font-bold uppercase tracking-tight text-white md:text-5xl"
+            />
           </div>
         </section>
       </main>

@@ -76,7 +76,7 @@ function MenuIcon({ open, barColor }) {
 
 export function Navbar() {
   const { pathname } = useLocation()
-  const { navLightBlend: t, navBackdropBlend, navReloadHomeOnClick } = useHomeNavTheme()
+  const { navLightBlend: t, navReloadHomeOnClick } = useHomeNavTheme()
   const menuId = useId()
   const [mobileOpen, setMobileOpen] = useState(false)
   const postulateBlockRef = useRef(null)
@@ -96,9 +96,9 @@ export function Navbar() {
   const headerStyle = useMemo(
     () => ({
       paddingTop: 'max(0.5rem, env(safe-area-inset-top, 0px))',
-      backgroundColor: `rgb(0 0 0 / ${(navBackdropBlend * 0.5).toFixed(3)})`,
+      backgroundColor: 'transparent',
     }),
-    [navBackdropBlend],
+    [],
   )
   const postStyle = useMemo(
     () => ({

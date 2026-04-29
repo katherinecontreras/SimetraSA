@@ -9,6 +9,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes }   from 'react-router-dom'
 
 import { HomeNavThemeProvider } from './context/HomeNavThemeContext'
+import { Footer } from './layouts/Footer'
 import { Navbar } from './layouts/Navbar'
 
 const HomePage       = lazy(() => import('./pages/home/page'))
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/contacto"    element={<ContactoPage />} />
         </Routes>
       </Suspense>
+      <Footer />
     </HomeNavThemeProvider>
   )
 }

@@ -1,6 +1,7 @@
 /**
  * Sección "activa" del home según una línea horizontal fija (p. ej. 12% del viewport).
- * Orden: hero → así trabajamos → nuestra historia → proyectos recientes → vacantes.
+ * Orden: hero → así trabajamos → nuestra historia → proyectos recientes → vacantes
+ * → nuestros servicios → misión y visión → nuestros clientes.
  */
 
 import { useEffect, useState } from 'react'
@@ -11,6 +12,9 @@ const ORDER = [
   { id: 'nuestra-historia', getEl: (r) => r.s3 },
   { id: 'proyectos-recientes', getEl: (r) => r.s4 },
   { id: 'vacantes', getEl: (r) => r.s5 },
+  { id: 'nuestros-servicios', getEl: (r) => r.s6 },
+  { id: 'mision-vision', getEl: (r) => r.s7 },
+  { id: 'nuestros-clientes', getEl: (r) => r.s8 },
 ]
 
 /**
@@ -20,10 +24,24 @@ const ORDER = [
  * @param {import('react').RefObject<HTMLElement | null>} params.s3Ref
  * @param {import('react').RefObject<HTMLElement | null>} params.s4Ref
  * @param {import('react').RefObject<HTMLElement | null>} params.s5Ref
+ * @param {import('react').RefObject<HTMLElement | null>} [params.s6Ref]
+ * @param {import('react').RefObject<HTMLElement | null>} [params.s7Ref]
+ * @param {import('react').RefObject<HTMLElement | null>} [params.s8Ref]
  * @param {boolean} [params.enabled]
  * @param {number} [params.lineRatio] 0..1, posición vertical del criterio (desde arriba)
  */
-export function useHomeNavSectionAt({ heroRef, s2Ref, s3Ref, s4Ref, s5Ref, enabled = true, lineRatio = 0.12 }) {
+export function useHomeNavSectionAt({
+  heroRef,
+  s2Ref,
+  s3Ref,
+  s4Ref,
+  s5Ref,
+  s6Ref,
+  s7Ref,
+  s8Ref,
+  enabled = true,
+  lineRatio = 0.12,
+}) {
   const [activeSection, setActiveSection] = useState('hero')
 
   useEffect(() => {
@@ -32,7 +50,16 @@ export function useHomeNavSectionAt({ heroRef, s2Ref, s3Ref, s4Ref, s5Ref, enabl
       return
     }
 
-    const refs = { hero: heroRef, s2: s2Ref, s3: s3Ref, s4: s4Ref, s5: s5Ref }
+    const refs = {
+      hero: heroRef,
+      s2: s2Ref,
+      s3: s3Ref,
+      s4: s4Ref,
+      s5: s5Ref,
+      s6: s6Ref,
+      s7: s7Ref,
+      s8: s8Ref,
+    }
 
     const update = () => {
       const y = window.innerHeight * lineRatio
@@ -71,7 +98,7 @@ export function useHomeNavSectionAt({ heroRef, s2Ref, s3Ref, s4Ref, s5Ref, enabl
       window.removeEventListener('scroll', update)
       window.removeEventListener('resize', update)
     }
-  }, [enabled, heroRef, s2Ref, s3Ref, s4Ref, s5Ref, lineRatio])
+  }, [enabled, heroRef, s2Ref, s3Ref, s4Ref, s5Ref, s6Ref, s7Ref, s8Ref, lineRatio])
 
   return activeSection
 }

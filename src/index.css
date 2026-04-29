@@ -35,3 +35,43 @@ p {
   font-family: var(--font-body);
   font-weight: 300;
 }
+
+.clientes-orbit-drift {
+  animation: cliente-orbit-drift var(--orbit-duration, 6s) ease-in-out var(--orbit-delay, 0s) infinite;
+  transform: translate3d(var(--follow-x, 0), var(--follow-y, 0), 0);
+  will-change: transform;
+}
+
+@keyframes cliente-orbit-drift {
+  0%,
+  100% {
+    transform: translate3d(var(--follow-x, 0), var(--follow-y, 0), 0) rotate(0deg);
+  }
+
+  25% {
+    transform: translate3d(
+        calc(var(--follow-x, 0) + 10px),
+        calc(var(--follow-y, 0) - 7px),
+        0
+      )
+      rotate(1.5deg);
+  }
+
+  50% {
+    transform: translate3d(
+        calc(var(--follow-x, 0) - 6px),
+        calc(var(--follow-y, 0) + 9px),
+        0
+      )
+      rotate(-1deg);
+  }
+
+  75% {
+    transform: translate3d(
+        calc(var(--follow-x, 0) + 7px),
+        calc(var(--follow-y, 0) + 5px),
+        0
+      )
+      rotate(1deg);
+  }
+}

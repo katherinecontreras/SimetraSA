@@ -69,15 +69,17 @@ function useHeroScroll({
           },
         })
 
-        scrollTl.to(
+        scrollTl.fromTo(
           zanjaRef.current,
+          { scaleY: 1, transformOrigin: '50% 100%' },
           { scaleY: 2, transformOrigin: '50% 100%', ease: 'none', duration: 1 },
           0,
         )
 
         if (simetraRef.current) {
-          scrollTl.to(
+          scrollTl.fromTo(
             simetraRef.current,
+            { opacity: 1 },
             { opacity: 0, ease: 'none', duration: 1 },
             0,
           )
