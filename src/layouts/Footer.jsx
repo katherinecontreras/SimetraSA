@@ -286,13 +286,13 @@ function NetworkBackground() {
 
 export function Footer() {
   return (
-    <footer className="relative isolate z-10001 overflow-hidden bg-black px-4 py-12 text-white shadow-[inset_0_32px_80px_rgba(0,0,0,0.95),inset_0_-32px_80px_rgba(0,0,0,0.95),inset_32px_0_80px_rgba(0,0,0,0.85),inset_-32px_0_80px_rgba(0,0,0,0.85)] sm:px-6 md:py-16">
+    <footer className="relative isolate z-10001 overflow-hidden bg-black px-0 py-5 text-white shadow-[inset_0_32px_80px_rgba(0,0,0,0.95),inset_0_-32px_80px_rgba(0,0,0,0.95),inset_32px_0_80px_rgba(0,0,0,0.85),inset_-32px_0_80px_rgba(0,0,0,0.85)] sm:px-6 md:py-16">
       <NetworkBackground />
       <div
-        className="relative mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-8 md:grid-cols-3 md:gap-10"
+        className="relative mx-0 px-0 md:mx-auto grid w-full md:max-w-7xl grid-cols-1 items-start gap-8 md:grid-cols-3 md:gap-10"
         style={{ zIndex: 1 }}
       >
-                <div className={`${footerCardClass} flex flex-col items-center justify-start gap-8 text-center`}>
+        <div className={`${footerCardClass} flex flex-col items-center justify-start gap-8 text-center`}>
           <div className="flex flex-col items-center">
             <img
               src={iconLogo}

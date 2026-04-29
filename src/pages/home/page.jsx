@@ -913,7 +913,7 @@ export default function HomePage() {
             tabIndex={-1}
           />
           <div
-            className="pointer-events-none absolute inset-x-0 -top-14 z-9 h-[18vh] bg-white md:-top-9 md:h-10"
+            className="pointer-events-none absolute inset-x-0 -top-10 z-9 h-[18vh] bg-white md:-top-9 md:h-10"
             aria-hidden
           />
           <div
