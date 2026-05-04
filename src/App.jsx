@@ -9,6 +9,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes }   from 'react-router-dom'
 
 import { HomeNavThemeProvider } from './context/HomeNavThemeContext'
+import { RouteTransitionProvider } from './context/RouteTransitionContext'
 import { Footer } from './layouts/Footer'
 import { Navbar } from './layouts/Navbar'
 
@@ -26,16 +27,18 @@ function PageFallback() {
 export default function App() {
   return (
     <HomeNavThemeProvider>
-      <Navbar />
-      <Suspense fallback={<PageFallback />}>
-        <Routes>
-          <Route path="/"            element={<HomePage />} />
-          <Route path="/proyects"    element={<ProyectsPage />} />
-          <Route path="/postulacion" element={<PostulacionPage />} />
-          <Route path="/contacto"    element={<ContactoPage />} />
-        </Routes>
-      </Suspense>
-      <Footer />
+      <RouteTransitionProvider>
+        <Navbar />
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/"            element={<HomePage />} />
+            <Route path="/proyects"    element={<ProyectsPage />} />
+            <Route path="/postulacion" element={<PostulacionPage />} />
+            <Route path="/contacto"    element={<ContactoPage />} />
+          </Routes>
+        </Suspense>
+        <Footer />
+      </RouteTransitionProvider>
     </HomeNavThemeProvider>
   )
 }

@@ -1,11 +1,11 @@
 /**
  * animations/SplitPanelSlide.jsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Panel que se desliza hacia afuera (exit) o se mantiene en posición (enter).
+ * Panel que se desliza hacia adentro para cubrir o hacia afuera para revelar.
  *
  * Props:
  *   side        : 'left' | 'right'
- *   direction   : 'exit' | 'enter'
+ *   direction   : 'cover' | 'exit' | 'enter'
  *   color       : string            (default: '#2B71AC') — color de fondo del panel
  *   onComplete  : () => void        — callback al terminar la animación
  *   children    : ReactNode
@@ -20,13 +20,15 @@ const TRANSITION = {
   ease     : [0.76, 0, 0.24, 1], // easeInOutQuart
 }
 
-/** @type {Record<'left'|'right', Record<'enter'|'exit', {initial:{x:string}, animate:{x:string}}>>} */
+/** @type {Record<'left'|'right', Record<'cover'|'enter'|'exit', {initial:{x:string}, animate:{x:string}}>>} */
 const VARIANTS = {
   left: {
+    cover : { initial: { x: '-100%' }, animate: { x: '0%'    } },
     enter : { initial: { x: '0%'    }, animate: { x: '0%'    } },
     exit  : { initial: { x: '0%'    }, animate: { x: '-100%' } },
   },
   right: {
+    cover : { initial: { x: '100%' }, animate: { x: '0%'   } },
     enter : { initial: { x: '0%'    }, animate: { x: '0%'   } },
     exit  : { initial: { x: '0%'    }, animate: { x: '100%' } },
   },

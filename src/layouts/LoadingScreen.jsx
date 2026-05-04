@@ -5,9 +5,11 @@
  * Se monta sobre el contenido y se desmonta tras la animación de salida.
  *
  * Props:
- *   isLoaded : boolean       — cuando pasa a true dispara la animación de salida
- *   onExit   : () => void    — callback para que el padre desmonte este componente
- *   color    : string        — color de los paneles (se pasa a SplitPanelSlide)
+ *   isLoaded        : boolean — cuando pasa a true dispara la animación de salida
+ *   onEnterComplete : () => void — callback cuando los paneles terminan de cubrir
+ *   onExit          : () => void — callback para que el padre desmonte este componente
+ *   color           : string  — color de los paneles (se pasa a SplitPanelSlide)
+ *   animateEnter    : boolean — si true, los paneles entran desde los bordes
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react'
@@ -15,19 +17,34 @@ import { SplitPanelSlide } from '../animations/SplitPanelSlide'
 
 const PANELS = ['left', 'right']
 
-export function LoadingScreen({ isLoaded = false, onExit, color }) {
+export function LoadingScreen({
+  isLoaded = false,
+  onEnterComplete,
+  onExit,
+  color,
+  animateEnter = false,
+}) {
   const [exiting, setExiting]  = useState(false)
-  const panelsCompletedRef     = useRef(0)
+  const enterCompletedRef      = useRef(0)
+  const exitCompletedRef       = useRef(0)
 
   // Cuando la carga termina → activa la animación de salida
   useEffect(() => {
     if (isLoaded) setExiting(true)
   }, [isLoaded])
 
-  // Ambos paneles deben terminar su animación antes de llamar a onExit
-  const handlePanelComplete = useCallback(() => {
-    panelsCompletedRef.current += 1
-    if (panelsCompletedRef.current >= PANELS.length) {
+  // Ambos paneles deben terminar de cubrir antes de navegar.
+  const handleEnterComplete = useCallback(() => {
+    enterCompletedRef.current += 1
+    if (enterCompletedRef.current >= PANELS.length) {
+      onEnterComplete?.()
+    }
+  }, [onEnterComplete])
+
+  // Ambos paneles deben terminar su salida antes de desmontar.
+  const handleExitComplete = useCallback(() => {
+    exitCompletedRef.current += 1
+    if (exitCompletedRef.current >= PANELS.length) {
       onExit?.()
     }
   }, [onExit])
@@ -48,9 +65,9 @@ export function LoadingScreen({ isLoaded = false, onExit, color }) {
         <SplitPanelSlide
           key={side}
           side={side}
-          direction={exiting ? 'exit' : 'enter'}
+          direction={exiting ? 'exit' : animateEnter ? 'cover' : 'enter'}
           color={color}
-          onComplete={exiting ? handlePanelComplete : undefined}
+          onComplete={exiting ? handleExitComplete : animateEnter ? handleEnterComplete : undefined}
         />
       ))}
     </div>

@@ -12,6 +12,7 @@ import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 
 import { useHomeNavTheme } from '../context/HomeNavThemeContext'
+import { useRouteTransition } from '../context/useRouteTransition'
 import iconLogo from '../assets/IconLogo.png'
 
 const ACCENT_BLUE = '#6CBFE0'
@@ -26,7 +27,11 @@ const MOBILE_MENU_DIM_EXTRA = 16
 
 /** Línea acento: entra desde la izquierda; al soltar hover se encoge con origen izq. (efecto derecha→izquierda). */
 const navItemUnderline =
-  'pointer-events-none absolute -bottom-1 left-0 h-0.5 w-full origin-left scale-x-0 transition-transform duration-300 ease-in-out group-hover:scale-x-100'
+  'pointer-events-none absolute -bottom-1 left-0 h-0.5 w-full origin-left transition-transform duration-300 ease-in-out'
+
+function navUnderlineClass(active) {
+  return `${navItemUnderline} ${active ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`
+}
 
 /** Lerp 0 = dark, 1 = light vía `color-mix` (mismo criterio que el overlay). */
 function colorMix(t, toLight, toDark) {
@@ -77,6 +82,7 @@ function MenuIcon({ open, barColor }) {
 export function Navbar() {
   const { pathname } = useLocation()
   const { navLightBlend: t, navReloadHomeOnClick } = useHomeNavTheme()
+  const { navigateWithTransition } = useRouteTransition()
   const menuId = useId()
   const [mobileOpen, setMobileOpen] = useState(false)
   const postulateBlockRef = useRef(null)
@@ -114,18 +120,41 @@ export function Navbar() {
     () => ({ backgroundColor: ACCENT_BLUE, color: '#ffffff' }),
     [],
   )
+  const isActiveRoute = useCallback((to) => pathname === to, [pathname])
 
   const closeMenu = useCallback(() => {
     setMobileOpen(false)
     setMobileDimHeight(0)
   }, [])
 
-  const handleHomeClick = useCallback(
-    (event) => {
-      if (!navReloadHomeOnClick) {
+  const isPlainLeftClick = useCallback((event) => (
+    event.button === 0 && !event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey
+  ), [])
+
+  const handleRouteLinkClick = useCallback(
+    (event, to) => {
+      if (!isPlainLeftClick(event)) return
+
+      if (pathname === to) {
         closeMenu()
         return
       }
+
+      event.preventDefault()
+      closeMenu()
+      navigateWithTransition(to)
+    },
+    [closeMenu, isPlainLeftClick, navigateWithTransition, pathname],
+  )
+
+  const handleHomeClick = useCallback(
+    (event) => {
+      if (!navReloadHomeOnClick) {
+        handleRouteLinkClick(event, '/')
+        return
+      }
+
+      if (!isPlainLeftClick(event)) return
 
       event.preventDefault()
       closeMenu()
@@ -133,9 +162,16 @@ export function Navbar() {
         window.location.reload()
         return
       }
-      window.location.assign('/')
+      navigateWithTransition('/')
     },
-    [closeMenu, navReloadHomeOnClick, pathname],
+    [
+      closeMenu,
+      handleRouteLinkClick,
+      isPlainLeftClick,
+      navReloadHomeOnClick,
+      navigateWithTransition,
+      pathname,
+    ],
   )
 
   useLayoutEffect(() => {
@@ -246,10 +282,11 @@ export function Navbar() {
                 className={`${fontNav} group relative inline-block`}
                 style={linkStyle}
                 onClick={handleHomeClick}
+                aria-current={isActiveRoute('/') ? 'page' : undefined}
               >
                 Home
                 <span
-                  className={navItemUnderline}
+                  className={navUnderlineClass(isActiveRoute('/'))}
                   style={{ backgroundColor: ACCENT_BLUE }}
                   aria-hidden
                 />
@@ -260,10 +297,12 @@ export function Navbar() {
                 to="/proyects"
                 className={`${fontNav} group relative inline-block`}
                 style={linkStyle}
+                onClick={(event) => handleRouteLinkClick(event, '/proyects')}
+                aria-current={isActiveRoute('/proyects') ? 'page' : undefined}
               >
                 Proyectos
                 <span
-                  className={navItemUnderline}
+                  className={navUnderlineClass(isActiveRoute('/proyects'))}
                   style={{ backgroundColor: ACCENT_BLUE }}
                   aria-hidden
                 />
@@ -274,10 +313,12 @@ export function Navbar() {
                 to="/contacto"
                 className={`${fontNav} group relative inline-block`}
                 style={linkStyle}
+                onClick={(event) => handleRouteLinkClick(event, '/contacto')}
+                aria-current={isActiveRoute('/contacto') ? 'page' : undefined}
               >
                 Contacto
                 <span
-                  className={navItemUnderline}
+                  className={navUnderlineClass(isActiveRoute('/contacto'))}
                   style={{ backgroundColor: ACCENT_BLUE }}
                   aria-hidden
                 />
@@ -288,6 +329,7 @@ export function Navbar() {
             to="/postulacion"
             className="shrink-0 rounded-lg px-4 py-2 text-center text-sm font-semibold shadow-sm transition-[color] duration-100 hover:brightness-95 active:scale-[0.99] font-(family-name:--font-subtitle)"
             style={postStyle}
+            onClick={(event) => handleRouteLinkClick(event, '/postulacion')}
           >
             Postulate
           </Link>
@@ -338,10 +380,11 @@ export function Navbar() {
                     to="/"
                     className={`${fontNavMobileMenu} group relative inline-block`}
                     onClick={handleHomeClick}
+                    aria-current={isActiveRoute('/') ? 'page' : undefined}
                   >
                     Home
                     <span
-                      className={navItemUnderline}
+                      className={navUnderlineClass(isActiveRoute('/'))}
                       style={{ backgroundColor: ACCENT_BLUE }}
                       aria-hidden
                     />
@@ -351,11 +394,12 @@ export function Navbar() {
                   <Link
                     to="/proyects"
                     className={`${fontNavMobileMenu} group relative inline-block`}
-                    onClick={closeMenu}
+                    onClick={(event) => handleRouteLinkClick(event, '/proyects')}
+                    aria-current={isActiveRoute('/proyects') ? 'page' : undefined}
                   >
                     Proyectos
                     <span
-                      className={navItemUnderline}
+                      className={navUnderlineClass(isActiveRoute('/proyects'))}
                       style={{ backgroundColor: ACCENT_BLUE }}
                       aria-hidden
                     />
@@ -365,11 +409,12 @@ export function Navbar() {
                   <Link
                     to="/contacto"
                     className={`${fontNavMobileMenu} group relative inline-block`}
-                    onClick={closeMenu}
+                    onClick={(event) => handleRouteLinkClick(event, '/contacto')}
+                    aria-current={isActiveRoute('/contacto') ? 'page' : undefined}
                   >
                     Contacto
                     <span
-                      className={navItemUnderline}
+                      className={navUnderlineClass(isActiveRoute('/contacto'))}
                       style={{ backgroundColor: ACCENT_BLUE }}
                       aria-hidden
                     />
@@ -382,7 +427,7 @@ export function Navbar() {
               >
                 <Link
                   to="/postulacion"
-                  onClick={closeMenu}
+                  onClick={(event) => handleRouteLinkClick(event, '/postulacion')}
                   className="w-full rounded-lg px-6 py-3 text-center text-sm font-semibold shadow-sm font-(family-name:--font-subtitle)"
                   style={postulateMobileStyle}
                 >

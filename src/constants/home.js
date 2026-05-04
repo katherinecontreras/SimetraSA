@@ -11,13 +11,13 @@ import {
   Wrench,
 } from 'lucide-react'
 
-import section2Img1 from '../assets/section2/image1.png'
-import section2Img2 from '../assets/section2/image2.png'
-import section2Img3 from '../assets/section2/image3.png'
-import section2Img4 from '../assets/section2/image4.png'
-import section2Img5 from '../assets/section2/image5.png'
+import section2Img1 from '../assets/home/section2/image1.png'
+import section2Img2 from '../assets/home/section2/image2.png'
+import section2Img3 from '../assets/home/section2/image3.png'
+import section2Img4 from '../assets/home/section2/image4.png'
+import section2Img5 from '../assets/home/section2/image5.png'
 
-/** Solo assets de `src/assets/section2/`. */
+/** Solo assets de `src/assets/home/section2/`. */
 export const ASI_TRABAJAMOS_IMAGES = [
   section2Img1,
   section2Img2,

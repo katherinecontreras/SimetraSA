@@ -1,7 +1,7 @@
-import imgPart1 from '../assets/section3/imgPart1.png'
-import imgPart2 from '../assets/section3/imgPart2.png'
-import imgPart3 from '../assets/section3/imgPart3.png'
-import imgPart4 from '../assets/section3/imgPart4.png'
+import imgPart1 from '../assets/home/section3/imgPart1.png'
+import imgPart2 from '../assets/home/section3/imgPart2.png'
+import imgPart3 from '../assets/home/section3/imgPart3.png'
+import imgPart4 from '../assets/home/section3/imgPart4.png'
 
 /** Fracción de longitud del path: posiciones a lo largo de la línea */
 export const NUESTRA_HISTORIA_QUARTILE_FRACTIONS = {
